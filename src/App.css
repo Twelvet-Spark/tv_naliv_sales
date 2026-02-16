@@ -12,25 +12,25 @@
   --text-main: rgba(14, 14, 14, 0.82);
   --text-soft: rgba(14, 14, 14, 0.62);
 
-  --radius-lg: 14px;
-  --radius-md: 10px;
-  --radius-sm: 8px;
+  --radius-lg: 12px;
+  --radius-md: 9px;
+  --radius-sm: 7px;
 
   --blur-md: 22px;
   --blur-lg: 28px;
   --blur-xl: 32px;
 
-  --space-1: 6px;
-  --space-2: 8px;
-  --space-3: 10px;
-  --space-4: clamp(12px, 0.9vw, 16px);
-  --space-5: clamp(16px, 1.1vw, 22px);
+  --space-1: 5px;
+  --space-2: 7px;
+  --space-3: 9px;
+  --space-4: clamp(10px, 0.8vw, 14px);
+  --space-5: clamp(14px, 1vw, 18px);
 
-  --title-size: clamp(20px, 1.4vw, 32px);
-  --subtitle-size: clamp(12px, 0.85vw, 16px);
-  --row-title-size: clamp(14px, 1.05vw, 22px);
-  --row-price-size: clamp(14px, 1.1vw, 22px);
-  --body-size: clamp(11px, 0.75vw, 14px);
+  --title-size: clamp(18px, 1.2vw, 28px);
+  --subtitle-size: clamp(11px, 0.75vw, 15px);
+  --row-title-size: clamp(13px, 0.95vw, 20px);
+  --row-price-size: clamp(13px, 1vw, 20px);
+  --body-size: clamp(10.5px, 0.7vw, 13px);
 
   --motion-200: 220ms cubic-bezier(0.22, 1, 0.36, 1);
   --motion-300: 300ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -295,14 +295,14 @@
 
 .progress-track {
   position: relative;
-  height: 4px;
+  height: 3px;
   border-radius: 999px;
   overflow: hidden;
   background: rgba(14, 14, 14, 0.1);
 }
 
 .progress-track-subtle {
-  height: 3px;
+  height: 2px;
   background: rgba(14, 14, 14, 0.08);
 }
 
@@ -342,9 +342,9 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  padding: 0 8px;
+  padding: 0 7px;
   color: var(--text-soft);
-  font-size: clamp(10px, 0.65vw, 12px);
+  font-size: clamp(9px, 0.6vw, 11px);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   background: rgba(14, 14, 14, 0.03);
@@ -354,15 +354,15 @@
 
 .promo-table-list {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-height: 0;
   overflow: hidden;
 }
 
 .list-row {
   position: relative;
-  min-height: clamp(42px, 3.2vh, 58px);
-  padding: 6px 8px;
+  min-height: clamp(36px, 3vh, 48px);
+  padding: 5px 8px;
   border-radius: var(--radius-md);
   background: rgba(14, 14, 14, 0.04);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
@@ -408,7 +408,7 @@
   color: var(--text-strong);
   font-size: var(--row-title-size);
   font-weight: 700;
-  line-height: 1.08;
+  line-height: 1.04;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -417,7 +417,7 @@
 .detail-sub {
   margin: 0;
   color: var(--text-main);
-  font-size: clamp(12px, 0.8vw, 16px);
+  font-size: clamp(11px, 0.7vw, 14px);
 }
 
 .price-col {
@@ -428,39 +428,39 @@
 .details-table .price-col,
 .list-row .price-col {
   color: var(--text-strong);
-  font-size: calc(var(--row-price-size) - 2px);
-  font-weight: 650;
+  font-size: calc(var(--row-price-size) - 3px);
+  font-weight: 600;
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 64px;
-  padding: 5px 8px;
+  min-width: 60px;
+  padding: 4px 7px;
   border-radius: 999px;
   background: var(--accent);
   color: var(--white);
   font-weight: 700;
-  font-size: clamp(12px, 0.78vw, 14px);
+  font-size: clamp(11px, 0.7vw, 13px);
 }
 
 .chip-strong {
-  min-width: 72px;
-  padding: 6px 9px;
-  font-size: clamp(13px, 0.9vw, 16px);
+  min-width: 66px;
+  padding: 5px 8px;
+  font-size: clamp(12px, 0.8vw, 14px);
 }
 
 .carousel-dots {
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   margin-top: 0;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 999px;
   border: none;
   background: rgba(14, 14, 14, 0.24);

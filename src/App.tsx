@@ -59,8 +59,8 @@ function useRowsPerPage() {
       if (typeof window === 'undefined') return
       const height = window.innerHeight
       // Reserve space for nav, hero, paddings; keep details visible on TV
-      const available = Math.max(170, height - 400)
-      const rowHeight = 46
+      const available = Math.max(150, height - 360)
+      const rowHeight = 40
       setRows(Math.max(1, Math.floor(available / rowHeight)))
     }
 
