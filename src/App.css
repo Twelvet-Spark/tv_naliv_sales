@@ -361,7 +361,7 @@
 
 .list-row {
   position: relative;
-  min-height: clamp(36px, 3vh, 48px);
+  height: clamp(36px, 3vh, 48px);
   padding: 5px 8px;
   border-radius: var(--radius-md);
   background: rgba(14, 14, 14, 0.04);

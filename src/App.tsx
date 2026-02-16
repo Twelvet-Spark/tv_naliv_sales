@@ -51,6 +51,11 @@ type UsePromotionsState = {
 const API_BASE_URL = import.meta.env.VITE_TV_API_URL ?? 'https://njt25.naliv.kz'
 const STORAGE_KEY = 'tv_business_token'
 
+// Controls how many promotion rows fit on screen
+const MIN_AVAILABLE_HEIGHT = 360
+const RESERVED_VERTICAL_SPACE = 360
+const DETAIL_ROW_HEIGHT = 40
+
 function useRowsPerPage() {
   const [rows, setRows] = useState(6)
 
@@ -59,9 +64,8 @@ function useRowsPerPage() {
       if (typeof window === 'undefined') return
       const height = window.innerHeight
       // Reserve space for nav, hero, paddings; keep details visible on TV
-      const available = Math.max(150, height - 360)
-      const rowHeight = 40
-      setRows(Math.max(1, Math.floor(available / rowHeight)))
+      const available = Math.max(MIN_AVAILABLE_HEIGHT, height - RESERVED_VERTICAL_SPACE)
+      setRows(Math.max(1, Math.floor(available / DETAIL_ROW_HEIGHT)))
     }
 
     compute()
