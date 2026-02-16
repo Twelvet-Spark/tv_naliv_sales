@@ -1,12 +1,8 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Route, Routes, useNavigate } from 'react-router-dom'
-import AppHeader from './components/AppHeader'
-import GlassHeader from './components/GlassHeader'
-import GlassSidebar from './components/GlassSidebar'
 import Layout from './components/Layout'
 import PromoCard from './components/PromoCard'
 import StatusState from './components/StatusState'
-import SystemButton from './components/SystemButton'
 import TokenScreen from './components/TokenScreen'
 import './App.css'
 
@@ -63,8 +59,8 @@ function useRowsPerPage() {
       if (typeof window === 'undefined') return
       const height = window.innerHeight
       // Reserve space for nav, hero, paddings; keep details visible on TV
-      const available = Math.max(200, height - 480)
-      const rowHeight = 60
+      const available = Math.max(170, height - 400)
+      const rowHeight = 46
       setRows(Math.max(1, Math.floor(available / rowHeight)))
     }
 
@@ -76,7 +72,7 @@ function useRowsPerPage() {
   return rows
 }
 
-function usePromotions(token: string | null, refreshIndex: number): UsePromotionsState {
+function usePromotions(token: string | null): UsePromotionsState {
   const [state, setState] = useState<UsePromotionsState>({
     status: 'idle',
     data: [],
@@ -147,7 +143,7 @@ function usePromotions(token: string | null, refreshIndex: number): UsePromotion
     load()
 
     return () => controller.abort()
-  }, [token, refreshIndex])
+  }, [token])
 
   return state
 }
@@ -207,8 +203,7 @@ function computeNewPrice(detail: PromotionDetail) {
 }
 
 function PromotionsPage({ token, onInvalidToken }: { token: string; onInvalidToken?: () => void }) {
-  const [refreshIndex, setRefreshIndex] = useState(0)
-  const { status, data, count, error, updatedAt } = usePromotions(token, refreshIndex)
+  const { status, data, error } = usePromotions(token)
   const pageCount = Math.max(1, data?.length ?? 0)
   const [pageIndex, setPageIndex] = useState(0)
   const rowsPerPage = useRowsPerPage()
@@ -289,56 +284,9 @@ function PromotionsPage({ token, onInvalidToken }: { token: string; onInvalidTok
   const pageProgressKey = `${pageIndex}-${pageCount}-${effectivePageIntervalMs}`
   const detailProgressKey = `${detailPageIndex}-${detailPageCount}`
 
-  const formattedNow = useMemo(() => new Intl.DateTimeFormat('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(now), [now])
-
-  const formattedUpdatedAt = useMemo(() => {
-    if (!updatedAt) return '—'
-    return new Intl.DateTimeFormat('ru-RU', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    }).format(updatedAt)
-  }, [updatedAt])
-
   return (
     <Layout hideHeader>
-      <div className="screen-grid">
-        <GlassSidebar>
-          <AppHeader
-            title="Экран акций"
-            subtitle={`Автосмена: ${Math.round(effectivePageIntervalMs / 1000)}с · Детали: ${detailIntervalMs / 1000}с`}
-          />
-
-          <GlassHeader className="status-block">
-            <div className="status-left">
-              <span className="status-dot" aria-hidden />
-              <span className="status-title">Автосмена</span>
-            </div>
-            <div className="status-meta">
-              <span>Страница {Math.min(pageIndex + 1, pageCount)}/{pageCount}</span>
-              <span>Детали {Math.min(detailPageIndex + 1, detailPageCount)}/{detailPageCount}</span>
-            </div>
-          </GlassHeader>
-
-          <div className="status-stack">
-            <span className="meta-chip">Акций: {count}</span>
-            <span className="meta-chip">Обновлено: {formattedUpdatedAt}</span>
-            <span className="meta-chip">Сейчас: {formattedNow}</span>
-          </div>
-
-          <SystemButton
-            variant="secondary"
-            onClick={() => setRefreshIndex((v) => v + 1)}
-            disabled={status === 'loading'}
-          >
-            Обновить
-          </SystemButton>
-        </GlassSidebar>
-
+      <div className="screen-grid no-sidebar">
         <div className="screen-main">
           {status === 'loading' && (
             <StatusState type="loading" />
