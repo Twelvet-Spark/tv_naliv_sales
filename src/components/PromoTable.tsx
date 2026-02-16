@@ -4,6 +4,7 @@ type PromotionDetail = {
   detail_id: number
   item_id: number | null
   item_name: string | null
+  item_img: string | null
   item_code: string | null
   price: number | null
   type: string
@@ -41,7 +42,17 @@ export default function PromoTable({ details, hasDiscountType, describeDetail, f
         {details.map((detail, index) => (
           <ListRow key={detail.detail_id} active={index === 0} className={hasDiscountType ? 'has-discount' : ''}>
             <div className="detail-cell">
-              <div className="detail-title">{detail.item_name ?? 'Товар без названия'}</div>
+              <div className="detail-title-row">
+                {detail.item_img ? (
+                  <img
+                    className="detail-thumb"
+                    src={detail.item_img}
+                    alt={detail.item_name ?? 'Товар'}
+                    loading="lazy"
+                  />
+                ) : null}
+                <div className="detail-title">{detail.item_name ?? 'Товар без названия'}</div>
+              </div>
             </div>
 
             {hasDiscountType ? (

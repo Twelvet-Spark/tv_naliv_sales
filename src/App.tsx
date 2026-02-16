@@ -10,6 +10,7 @@ type PromotionDetail = {
   detail_id: number
   item_id: number | null
   item_name: string | null
+  item_img: string | null
   item_code: string | null
   price: number | null
   type: 'PERCENT' | 'AMOUNT' | string

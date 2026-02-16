@@ -403,6 +403,20 @@
   min-width: 0;
 }
 
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.detail-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .detail-title {
   margin: 0;
   color: var(--text-strong);
