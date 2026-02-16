@@ -208,7 +208,6 @@ function PromotionsPage({ token, onInvalidToken }: { token: string; onInvalidTok
   const [pageIndex, setPageIndex] = useState(0)
   const rowsPerPage = useRowsPerPage()
   const [detailPageIndex, setDetailPageIndex] = useState(0)
-  const [now, setNow] = useState(new Date())
   const pageIntervalMs = 12000
   const detailIntervalMs = 7000
   const invalidNotified = useRef(false)
@@ -223,10 +222,6 @@ function PromotionsPage({ token, onInvalidToken }: { token: string; onInvalidTok
     }
   }, [status, error, onInvalidToken])
 
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 1000)
-    return () => window.clearInterval(id)
-  }, [])
 
   useEffect(() => {
     setPageIndex(0)
