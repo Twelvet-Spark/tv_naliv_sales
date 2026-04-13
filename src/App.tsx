@@ -107,6 +107,12 @@ function App() {
     })
   }, [token, wallConfig.screenCount, wallConfig.screenIndex])
 
+  useEffect(() => {
+    const root = document.documentElement
+    root.style.setProperty('--ui-scale-factor', String(wallConfig.uiScalePercent / 100))
+    root.style.setProperty('--safe-area-size', `${wallConfig.safeAreaPx}px`)
+  }, [wallConfig.safeAreaPx, wallConfig.uiScalePercent])
+
   const handleSaveSetup = (next: string, nextWallConfig: TvWallConfig) => {
     setToken(next)
     persistToken(next)
@@ -145,6 +151,8 @@ function App() {
       token={token}
       wallScreenCount={wallConfig.screenCount}
       wallScreenIndex={wallConfig.screenIndex}
+      uiScalePercent={wallConfig.uiScalePercent}
+      safeAreaPx={wallConfig.safeAreaPx}
       debugHour={debugHour}
       debugMessageMode={debugMessageMode}
       debugRotationPaused={debugRotationPaused}

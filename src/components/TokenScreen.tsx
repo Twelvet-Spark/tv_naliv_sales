@@ -1,5 +1,5 @@
 import { type FormEvent } from 'react'
-import GlassHeader from './GlassHeader'
+import { useViewportMetrics } from '../features/layout/useViewportMetrics'
 import PrimaryButton from './PrimaryButton'
 import TokenInput from './TokenInput'
 import TokenSurface from './TokenSurface'
@@ -12,6 +12,10 @@ type Props = {
   onScreenCountChange: (value: string) => void
   screenNumberValue: string
   onScreenNumberChange: (value: string) => void
+  uiScaleValue: string
+  onUiScaleChange: (value: string) => void
+  safeAreaValue: string
+  onSafeAreaChange: (value: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   validationMessage?: string | null
 }
@@ -24,35 +28,46 @@ export default function TokenScreen({
   onScreenCountChange,
   screenNumberValue,
   onScreenNumberChange,
+  uiScaleValue,
+  onUiScaleChange,
+  safeAreaValue,
+  onSafeAreaChange,
   onSubmit,
   validationMessage,
 }: Props) {
-  const title = isInitialSetup ? 'Первичная настройка экрана' : 'Подключение экрана'
-  const description = isInitialSetup
-    ? 'Введите токен и параметры видеостены. После сохранения этот экран сразу начнет показывать свою часть общей ротации.'
-    : 'Введите бизнес-токен и параметры видеостены. После сохранения экран начнет автоматически обновлять акции магазина и займет свою позицию в общей ротации.'
-  const tokenHint = isInitialSetup
-    ? 'Токен сохраняется только на этом устройстве.'
-    : 'Токен сохраняется только на устройстве. При кратком сбое сети экран продолжит показывать последние загруженные акции.'
-  const screenCountHint = isInitialSetup
-    ? 'Сколько экранов участвует в общей ленте.'
-    : 'Сколько экранов одновременно показывают одну общую ленту акций.'
-  const screenNumberHint = isInitialSetup
-    ? 'Позиция текущего экрана в этой связке.'
-    : 'Например, для трех экранов выберите 1, 2 или 3.'
-  const submitLabel = isInitialSetup ? 'Сохранить и открыть акции' : 'Сохранить и перейти к акциям'
+  const metrics = useViewportMetrics()
+  const title = isInitialSetup ? 'Настройка экрана' : 'Настройки экрана'
+  const submitLabel = isInitialSetup ? 'Сохранить' : 'Применить'
 
   return (
     <div className={`token-screen ${isInitialSetup ? 'token-screen-initial' : 'token-screen-edit'}`}>
-      <GlassHeader className="token-intro">
-        <div className="layout-heading">
-          <p className="eyebrow">НАЛИВ ТВ</p>
-          <h1>{title}</h1>
-          <p className="lede">{description}</p>
-        </div>
-      </GlassHeader>
-
       <TokenSurface className="promo-card token-panel">
+        <div className="token-toolbar">
+          <div className="token-title-block">
+            <p className="eyebrow">НАЛИВ ТВ</p>
+            <h1>{title}</h1>
+          </div>
+          {metrics ? (
+            <div className="token-device-meta" aria-label="Параметры экрана и браузера">
+              <div className="token-device-pill">
+                <span className="token-device-label">Браузер</span>
+                <strong className="token-device-value">{metrics.viewportWidth}x{metrics.viewportHeight}</strong>
+              </div>
+              <div className="token-device-pill">
+                <span className="token-device-label">Панель</span>
+                <strong className="token-device-value">{metrics.panelWidth}x{metrics.panelHeight}</strong>
+              </div>
+              <div className="token-device-pill">
+                <span className="token-device-label">Доступно</span>
+                <strong className="token-device-value">{metrics.availableWidth}x{metrics.availableHeight}</strong>
+              </div>
+              <div className="token-device-pill">
+                <span className="token-device-label">Масштаб</span>
+                <strong className="token-device-value">{metrics.devicePixelRatio} · {metrics.density}</strong>
+              </div>
+            </div>
+          ) : null}
+        </div>
         <form className="token-form" onSubmit={onSubmit}>
           <TokenInput
             label="Бизнес-токен"
@@ -62,7 +77,6 @@ export default function TokenScreen({
             onChange={(event) => onChange(event.target.value)}
             autoFocus={isInitialSetup}
             autoComplete="off"
-            hint={tokenHint}
           />
           <div className="token-config-grid">
             <TokenInput
@@ -74,7 +88,6 @@ export default function TokenScreen({
               placeholder="1"
               value={screenCountValue}
               onChange={(event) => onScreenCountChange(event.target.value)}
-              hint={screenCountHint}
             />
             <TokenInput
               label="Номер этого ТВ"
@@ -85,7 +98,28 @@ export default function TokenScreen({
               placeholder="1"
               value={screenNumberValue}
               onChange={(event) => onScreenNumberChange(event.target.value)}
-              hint={screenNumberHint}
+            />
+            <TokenInput
+              label="Масштаб UI, %"
+              type="number"
+              inputMode="numeric"
+              min={50}
+              max={120}
+              step={1}
+              placeholder="100"
+              value={uiScaleValue}
+              onChange={(event) => onUiScaleChange(event.target.value)}
+            />
+            <TokenInput
+              label="Безопасная рамка, px"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={64}
+              step={1}
+              placeholder="0"
+              value={safeAreaValue}
+              onChange={(event) => onSafeAreaChange(event.target.value)}
             />
           </div>
           {validationMessage ? <p className="token-error" role="alert">{validationMessage}</p> : null}

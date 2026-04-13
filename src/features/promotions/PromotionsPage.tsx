@@ -174,6 +174,8 @@ type Props = {
   token: string
   wallScreenCount?: number
   wallScreenIndex?: number
+  uiScalePercent?: number
+  safeAreaPx?: number
   debugHour?: number | null
   debugMessageMode?: DebugMessageMode
   debugRotationPaused?: boolean
@@ -187,6 +189,8 @@ export default function PromotionsPage({
   token,
   wallScreenCount = 1,
   wallScreenIndex = 0,
+  uiScalePercent = 100,
+  safeAreaPx = 0,
   debugHour = null,
   debugMessageMode = 'auto',
   debugRotationPaused = false,
@@ -207,7 +211,7 @@ export default function PromotionsPage({
   const rotationPausedAtMsRef = useRef<number | null>(null)
   const pauseReasonRef = useRef<'hidden' | 'debug' | null>(null)
   const hiddenStartedAtMsRef = useRef<number | null>(null)
-  const rowsPerPage = useRowsPerPage()
+  const rowsPerPage = useRowsPerPage(uiScalePercent, safeAreaPx)
   const greeting = useKzGreeting(debugHour)
   const dayPeriod = useMemo(() => getKzDayPeriod(resolveKzHour(debugHour)), [debugHour])
   const normalizedWallScreenCount = Math.max(1, Math.floor(wallScreenCount))
