@@ -71,7 +71,8 @@ function DetailThumbnail({ src, alt, detailId }: { src: string | null; alt: stri
       className="card-thumb"
       src={src}
       alt={alt}
-      loading="lazy"
+      loading="eager"
+      fetchPriority="high"
       onError={() => {
         if (!hasLoggedError.current) {
           hasLoggedError.current = true
@@ -110,7 +111,7 @@ export default function PromoTable({
         </div>
       )}
 
-      <div className={`promo-table-list ${compactCatalogMode ? 'promo-table-list-catalog' : ''}`}>
+      <div className={`promo-table-list ${compactCatalogMode ? 'promo-table-list-catalog' : ''} ${compactCatalogMode && details.length === 1 ? 'promo-table-list-single' : ''}`}>
         {details.length === 0 && (
           <div className="promo-table-empty">
             Для этой акции пока нет позиций.

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import PromoTable from './PromoTable'
 import { getPromotionPresentation } from '../features/promotions/format'
 import type { Promotion, PromotionDetail } from '../features/promotions/types'
@@ -9,6 +9,7 @@ const RING_HIDDEN_HEAD_PROGRESS = 0.05
 const RING_FADE_IN_END_PROGRESS = 0.14
 const RING_FADE_OUT_START_PROGRESS = 0.86
 const RING_HIDDEN_TAIL_PROGRESS = 0.97
+const preloadedImageUrls = new Set<string>()
 
 function resolveRingOpacity(progress: number) {
   if (progress <= RING_HIDDEN_HEAD_PROGRESS || progress >= RING_HIDDEN_TAIL_PROGRESS) {
@@ -98,19 +99,29 @@ export default function PromoCard({
       return visibleDetailsOverride
     }
 
-    if (detailPageCount <= 1) return promotion.details.slice(0, rowsPerPage)
-
-    const total = promotion.details.length
-    const basePerPage = Math.floor(total / detailPageCount)
-    const extra = total % detailPageCount
-
-    let start = 0
-    for (let i = 0; i < detailPageIndex; i++) {
-      start += basePerPage + (i < extra ? 1 : 0)
-    }
-    const count = basePerPage + (detailPageIndex < extra ? 1 : 0)
-    return promotion.details.slice(start, start + count)
+    const start = detailPageIndex * rowsPerPage
+    return promotion.details.slice(start, start + rowsPerPage)
   }, [detailPageIndex, detailPageCount, promotion.details, rowsPerPage, visibleDetailsOverride])
+
+  useEffect(() => {
+    const pagesToWarm = [detailPageIndex, detailPageIndex + 1]
+
+    for (const pageIndex of pagesToWarm) {
+      const normalizedPageIndex = detailPageCount > 0 ? pageIndex % detailPageCount : 0
+      const start = normalizedPageIndex * rowsPerPage
+      const pageDetails = promotion.details.slice(start, start + rowsPerPage)
+
+      for (const detail of pageDetails) {
+        const src = detail.item_img?.trim()
+        if (!src || preloadedImageUrls.has(src)) continue
+
+        preloadedImageUrls.add(src)
+        const image = new Image()
+        image.decoding = 'async'
+        image.src = src
+      }
+    }
+  }, [detailPageCount, detailPageIndex, promotion.details, rowsPerPage])
 
   const presentation = useMemo(() => getPromotionPresentation(promotion), [promotion])
 

@@ -277,6 +277,11 @@ function getCatalogGroupKey(detail: PromotionDetail) {
   return firstWord.trim().toLocaleLowerCase('ru-RU')
 }
 
+function shouldExcludeFromMultiTvCatalog(detail: PromotionDetail) {
+  const rawName = (detail.item_name ?? '').trimStart().toLocaleLowerCase('ru-RU')
+  return rawName.startsWith('уд')
+}
+
 function sortCatalogDetails(details: PromotionDetail[]) {
   return [...details].sort((left, right) => {
     const leftKey = getCatalogGroupKey(left)
@@ -301,7 +306,10 @@ function buildCatalogScreenFeed(
 ): Promotion[] {
   const safeScreenCount = Math.max(1, screenCount)
   const safeScreenIndex = Math.max(0, Math.min(safeScreenCount - 1, screenIndex))
-  const sortedDetails = sortCatalogDetails(catalogFeed.flatMap((promotion) => promotion.details))
+  const filteredDetails = catalogFeed
+    .flatMap((promotion) => promotion.details)
+    .filter((detail) => !shouldExcludeFromMultiTvCatalog(detail))
+  const sortedDetails = sortCatalogDetails(filteredDetails)
 
   if (sortedDetails.length === 0) {
     return []
@@ -437,7 +445,11 @@ export default function PromotionsPage({
   const shouldUseSyncedClock = (activeWallScreenCount > 1 && activePromotions.length > 0) || shouldForceSyncedPaging
   const isCatalogOnlyScreen = hasSplitFeeds && !isDedicatedPromoScreen
   const useCompactCatalogMode = !shouldUseMixedSingleScreen && activePromotions.length > 0 && activePromotions.every((promotion) => promotion.sourceKind === 'catalog')
-  const visibleItemsPerPage = useCompactCatalogMode ? activeRowsPerPage * 2 : activeRowsPerPage
+  const visibleItemsPerPage = useCompactCatalogMode
+    ? activeRowsPerPage >= 7
+      ? Math.max(1, activeRowsPerPage * 2 - 2)
+      : activeRowsPerPage * 2
+    : activeRowsPerPage
   const shouldShowPromoChrome = !isCatalogOnlyScreen
   const isRotationPaused = debugRotationPaused || (isAutoPaused && !shouldUseSyncedClock)
   const staleAgeLabel = useMemo(() => {
