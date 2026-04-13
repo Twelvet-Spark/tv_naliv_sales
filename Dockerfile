@@ -21,6 +21,5 @@ RUN set -eux; \
 FROM caddy:2.11.2-alpine
 COPY --from=build /app/dist /usr/share/caddy
 COPY Caddyfile /etc/caddy/Caddyfile
-USER caddy
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD wget -q -O /dev/null http://127.0.0.1:80/ || exit 1
 EXPOSE 80
