@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-type Density = 'comfortable' | 'medium' | 'compact'
+type Density = 'comfortable' | 'medium' | 'compact' | 'low-res-tv'
 
 type ViewportMetrics = {
   viewportWidth: number
@@ -23,6 +23,10 @@ function resolveViewportSize() {
 }
 
 function resolveDensity(width: number, height: number): Density {
+  if (width <= 1024 && height <= 600) {
+    return 'low-res-tv'
+  }
+
   if (height <= 760 || width <= 1280) {
     return 'compact'
   }

@@ -89,6 +89,22 @@
   --label-size-base: clamp(9px, 0.56vw, 11px);
 }
 
+:root[data-viewport-density='low-res-tv'] {
+  --radius-lg-base: 18px;
+  --radius-md-base: 14px;
+  --radius-sm-base: 10px;
+  --space-2-base: clamp(4px, 0.42vw, 7px);
+  --space-3-base: clamp(6px, 0.6vw, 10px);
+  --space-4-base: clamp(8px, 0.82vw, 12px);
+  --space-5-base: clamp(10px, 0.95vw, 16px);
+  --title-size-base: clamp(24px, 2.8vw, 32px);
+  --subtitle-size-base: clamp(11px, 1.05vw, 13px);
+  --row-title-size-base: clamp(18px, 1.85vw, 24px);
+  --row-price-size-base: clamp(22px, 2.1vw, 30px);
+  --body-size-base: clamp(12px, 1.1vw, 14px);
+  --label-size-base: clamp(8px, 0.72vw, 10px);
+}
+
 .app-shell {
   position: relative;
   min-height: 100dvh;
@@ -1009,12 +1025,20 @@
   padding: calc(10px * var(--ui-scale-factor) + var(--safe-area-size)) calc(12px * var(--ui-scale-factor) + var(--safe-area-size)) calc(8px * var(--ui-scale-factor) + var(--safe-area-size));
 }
 
+:root[data-viewport-density='low-res-tv'] .layout {
+  padding: calc(8px * var(--ui-scale-factor) + var(--safe-area-size)) calc(10px * var(--ui-scale-factor) + var(--safe-area-size)) calc(6px * var(--ui-scale-factor) + var(--safe-area-size));
+}
+
 :root[data-viewport-density='medium'] .token-screen {
   width: min(980px, 100%);
 }
 
 :root[data-viewport-density='compact'] .token-screen {
   width: min(860px, 100%);
+}
+
+:root[data-viewport-density='low-res-tv'] .token-screen {
+  width: min(820px, 100%);
 }
 
 :root[data-viewport-density='medium'] .token-input,
@@ -1026,6 +1050,10 @@
 :root[data-viewport-density='medium'] .token-device-meta,
 :root[data-viewport-density='compact'] .token-device-meta {
   grid-template-columns: 1fr;
+}
+
+:root[data-viewport-density='low-res-tv'] .token-device-meta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 :root[data-viewport-density='medium'] .token-device-pill {
@@ -1083,6 +1111,140 @@
   min-width: calc(132px * var(--ui-scale-factor));
   padding: calc(6px * var(--ui-scale-factor)) calc(12px * var(--ui-scale-factor));
   font-size: calc(12px * var(--ui-scale-factor));
+}
+
+:root[data-viewport-density='low-res-tv'] .system-btn {
+  min-height: calc(34px * var(--ui-scale-factor));
+  min-width: calc(124px * var(--ui-scale-factor));
+  padding: calc(5px * var(--ui-scale-factor)) calc(10px * var(--ui-scale-factor));
+  font-size: calc(12px * var(--ui-scale-factor));
+}
+
+:root[data-viewport-density='low-res-tv'] .screen-main {
+  gap: var(--space-2);
+}
+
+:root[data-viewport-density='low-res-tv'] .glass-header,
+:root[data-viewport-density='low-res-tv'] .status-surface,
+:root[data-viewport-density='low-res-tv'] .token-surface {
+  padding: var(--space-4);
+}
+
+:root[data-viewport-density='low-res-tv'] .promo-head {
+  gap: var(--space-2);
+}
+
+:root[data-viewport-density='low-res-tv'] .promo-head-copy {
+  gap: 4px;
+}
+
+:root[data-viewport-density='low-res-tv'] .promo-topline {
+  gap: 10px;
+}
+
+:root[data-viewport-density='low-res-tv'] .promo-progress,
+:root[data-viewport-density='low-res-tv'] .promo-progress-ring {
+  width: 42px;
+  height: 42px;
+}
+
+:root[data-viewport-density='low-res-tv'] .promo-progress-number {
+  font-size: 9px;
+}
+
+:root[data-viewport-density='low-res-tv'] .card-list-header {
+  padding-bottom: 6px;
+}
+
+:root[data-viewport-density='low-res-tv'] .card-list-header-price {
+  min-width: 136px;
+}
+
+:root[data-viewport-density='low-res-tv'] .promo-table-wrap,
+:root[data-viewport-density='low-res-tv'] .promo-table-list {
+  gap: 8px;
+}
+
+:root[data-viewport-density='low-res-tv'] .product-card {
+  gap: 12px;
+  padding-bottom: 10px;
+}
+
+:root[data-viewport-density='low-res-tv'] .card-left {
+  gap: 10px;
+}
+
+:root[data-viewport-density='low-res-tv'] .card-thumb,
+:root[data-viewport-density='low-res-tv'] .card-thumb-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+}
+
+:root[data-viewport-density='low-res-tv'] .card-info {
+  gap: 6px;
+}
+
+:root[data-viewport-density='low-res-tv'] .card-meta-line {
+  grid-template-columns: 54px minmax(0, 1fr);
+  column-gap: 8px;
+  min-height: 24px;
+}
+
+:root[data-viewport-density='low-res-tv'] .card-tag {
+  min-height: 22px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+:root[data-viewport-density='low-res-tv'] .card-right {
+  min-width: 136px;
+  gap: 3px;
+}
+
+:root[data-viewport-density='low-res-tv'] .card-old-price {
+  font-size: 12px;
+}
+
+:root[data-viewport-density='low-res-tv'] .card-badge {
+  min-height: 34px;
+  min-width: 74px;
+  padding: 0 10px;
+  font-size: 11px;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
+:root[data-viewport-density='low-res-tv'] .promo-footer {
+  min-height: 44px;
+  padding-top: 4px;
+}
+
+:root[data-viewport-density='low-res-tv'] .promo-footer-copy {
+  gap: 8px;
+}
+
+:root[data-viewport-density='low-res-tv'] .promo-greeting {
+  font-size: clamp(18px, 1.9vw, 22px);
+}
+
+:root[data-viewport-density='low-res-tv'] .promo-message {
+  font-size: clamp(12px, 1.15vw, 14px);
+}
+
+:root[data-viewport-density='low-res-tv'] .tech-overlay {
+  font-size: 10px;
+  max-width: min(52vw, 420px);
+}
+
+:root[data-viewport-density='low-res-tv'] .admin-exit-trigger {
+  width: min(32vw, 200px);
+  min-height: 40px;
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+:root[data-viewport-density='low-res-tv'] .admin-exit-label {
+  font-size: 10px;
 }
 
 :root[data-viewport-density='compact'] .token-screen-initial .layout-heading h1,
