@@ -4,6 +4,7 @@ import AdminExitControl from './components/AdminExitControl'
 import AppErrorBoundary from './components/AppErrorBoundary'
 import TimeDebugPanel from './components/TimeDebugPanel'
 import { grantAdminAccess, hasAdminAccess, revokeAdminAccess } from './features/admin/storage'
+import { useViewportDensity } from './features/layout/useViewportDensity'
 import PromotionsPage from './features/promotions/PromotionsPage'
 import { getInitialTvWallConfig, persistTvWallConfig, type TvWallConfig } from './features/display/storage'
 import { getKzThemePalette, resolveKzHour, type DebugMessageMode } from './features/theme/kzTime'
@@ -31,6 +32,8 @@ function getInitialDebugHour() {
 }
 
 function App() {
+  useViewportDensity()
+
   const envToken = import.meta.env.VITE_TV_BUSINESS_TOKEN ?? ''
   const [token, setToken] = useState(() => getInitialToken(envToken))
   const [wallConfig, setWallConfig] = useState<TvWallConfig>(() => getInitialTvWallConfig())

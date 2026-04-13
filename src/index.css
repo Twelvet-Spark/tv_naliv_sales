@@ -1,6 +1,6 @@
 :root {
   font-family: 'Bahnschrift', 'Trebuchet MS', 'Segoe UI Variable Display', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.45;
   font-weight: 400;
   background: var(--bg-base, #111111);
@@ -8,6 +8,8 @@
   min-height: 100vh;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   color-scheme: dark;
 }
 
