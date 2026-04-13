@@ -10,72 +10,63 @@ import { useKzGreeting } from '../theme/useKzGreeting'
 import { CLIENT_MESSAGE_ROTATION_INTERVAL_MS, DETAIL_ROTATION_INTERVAL_MS, PAGE_ROTATION_INTERVAL_MS, PROGRESS_TICK_INTERVAL_MS } from './constants'
 import { computeNewPrice, describeDetail, formatDate, formatPrice, formatStaleAge } from './format'
 import { parsePromotionItemName } from './parseItemName'
+import { buildToppedUpPages } from './pagination'
 import type { Promotion, PromotionDetail } from './types'
 import { isInvalidTokenMessage, usePromotions } from './usePromotions'
 
 const GENERAL_MESSAGES = [
-  'Спасибо, что выбираете нас.',
-  'Пусть выбор будет приятным и спокойным.',
-  'Хорошего настроения и удачного дня.',
-  'Рады видеть вас сегодня.',
-  'Пусть покупка пройдёт легко и быстро.',
-  'Хорошего отдыха и приятных встреч.',
-  'Пусть сегодняшний день будет удачным.',
-  'Спасибо, что заглянули к нам.',
-  'Пусть вечер пройдёт в хорошей компании.',
-  'Надеемся, вы найдёте именно то, что искали.',
-  'Пусть выбор сегодня порадует вас.',
-  'Желаем хорошего настроения.',
-  'Пусть покупки будут только приятными.',
-  'Пусть у вас будет хороший день.',
-  'Берегите хорошее настроение.',
-  'Приятного выбора и лёгкого отдыха.',
-  'Пусть каждый визит будет удобным.',
-  'Мы рады быть частью вашего вечера.',
-  'Пусть всё нужное окажется под рукой.',
-  'Спасибо за ваш выбор и доверие.',
-  'Желаем спокойного и приятного отдыха.',
-  'Пусть сегодняшний ритм будет комфортным.',
-  'Пусть вечер будет тёплым и уютным.',
-  'Заглядывайте к нам чаще.',
-  'Пусть у вас будет хороший повод улыбнуться.',
-  'Желаем лёгкого выбора и приятных впечатлений.',
-  'Пусть день сложится именно так, как нужно.',
-  'Спасибо, что вы с нами.',
-  'Пусть хороший настрой останется с вами надолго.',
-  'Всегда рады вашему визиту.',
+  'Если нужен понятный выбор, мы рядом.',
+  'Подскажем спокойно и по делу.',
+  'Хороший отдых начинается с понятного выбора.',
+  'Качество должно быть стабильным, и мы это ценим.',
+  'Свежесть и правильная температура важны не меньше вкуса.',
+  'Если хотите попробовать что-то новое, подскажем, с чего начать.',
+  'Выбирайте в своем ритме. Мы все подготовили.',
+  'Когда нужен проверенный вариант, он должен быть под рукой.',
+  'Здесь можно собрать хороший стол без лишней суеты.',
+  'Помогаем выбрать так, чтобы всем в компании было комфортно.',
+  'Надежный выбор - это когда качество не приходится угадывать.',
+  'Если нужен совет по сортам и вкусам, он у нас есть.',
+  'Простое правило хорошего отдыха: свежее, холодное и вовремя.',
+  'Мы за понятный сервис и стабильное качество.',
+  'Хорошие встречи проще организовать, когда все нужное рядом.',
+  'Знаем разницу между сортами и объясним без сложных слов.',
+  'Если план уже есть, поможем быстро его собрать.',
+  'Уверенный выбор начинается со стабильного качества.',
+  'Когда все сделано как надо, отдых проходит спокойнее.',
+  'Всегда приятно помочь с хорошим выбором.',
 ]
 
 const PERIOD_MESSAGES = {
   dawn: [
-    'Пусть утро начнётся мягко и спокойно.',
-    'Добро пожаловать в новое утро.',
-    'Пусть день начнётся с хорошего настроя.',
-    'Желаем спокойного старта дня.',
+    'Хорошо, когда начало дня проходит без лишней спешки.',
+    'Если нужен понятный выбор с утра, подскажем по делу.',
+    'Все нужное лучше собирать спокойно и без суеты.',
+    'Пусть старт дня будет простым и организованным.',
   ],
   morning: [
-    'Пусть утро будет бодрым и лёгким.',
-    'Хорошего начала дня.',
-    'Пусть все планы сегодня складываются удачно.',
-    'Желаем доброго и спокойного утра.',
+    'Когда выбор понятный, день идет спокойнее.',
+    'Если планы на вечер уже намечаются, часть дела можно закрыть заранее.',
+    'Мы за сервис, который не заставляет тратить лишнее время.',
+    'Хороший выбор с утра помогает не отвлекаться позже.',
   ],
   day: [
-    'Пусть день проходит ровно и приятно.',
-    'Желаем продуктивного и лёгкого дня.',
-    'Пусть середина дня будет удачной.',
-    'Хорошего темпа и хорошего настроения.',
+    'Днем удобно выбрать все заранее, чтобы вечером не отвлекаться.',
+    'Если нужен совет по ассортименту, подскажем коротко и понятно.',
+    'Качественный отдых обычно начинается с хорошей подготовки.',
+    'Когда нужно быстро собрать встречу, важна надежность.',
   ],
   evening: [
-    'Пусть вечер будет спокойным и приятным.',
-    'Желаем уютного и тёплого вечера.',
-    'Пусть отдых начнётся с хорошего настроения.',
-    'Хорошего вечера и приятной компании.',
+    'Если собирается компания, поможем выбрать спокойно и по делу.',
+    'Вечером особенно важны свежесть, холод и понятный выбор.',
+    'Хороший отдых любит надежные детали.',
+    'Когда встреча уже начинается, важно, чтобы все было под рукой.',
   ],
   night: [
-    'Пусть ночь будет спокойной.',
-    'Желаем тихого и комфортного вечера.',
-    'Пусть поздний час будет уютным.',
-    'Спасибо, что зашли к нам сегодня.',
+    'Поздний выбор тоже должен быть понятным и спокойным.',
+    'Ночью особенно ценится сервис без лишней суеты.',
+    'Если нужен проверенный вариант в поздний час, он должен быть рядом.',
+    'Спокойный сервис важен в любое время.',
   ],
 } as const
 
@@ -103,17 +94,15 @@ function buildPromotionWallPages(data: ReturnType<typeof usePromotions>['data'],
   const pageCapacity = Math.max(1, rowsPerPage * safeScreenCount)
 
   return data.flatMap<PromotionWallPage>((promotion, promotionIndex) => {
-    const wallPageCount = Math.max(1, Math.ceil(promotion.details.length / pageCapacity))
+    const pages = buildToppedUpPages(promotion.details, pageCapacity)
+    const wallPageCount = Math.max(1, pages.length)
 
-    return Array.from({ length: wallPageCount }, (_, wallPageIndex) => {
-      const start = wallPageIndex * pageCapacity
-      return {
-        promotionIndex,
-        wallPageIndex,
-        wallPageCount,
-        pageDetails: promotion.details.slice(start, start + pageCapacity),
-      }
-    })
+    return pages.map((pageDetails, wallPageIndex) => ({
+      promotionIndex,
+      wallPageIndex,
+      wallPageCount,
+      pageDetails,
+    }))
   })
 }
 
@@ -395,6 +384,7 @@ export default function PromotionsPage({
   const [nowMs, setNowMs] = useState(() => Date.now())
   const [rotationAnchorMs, setRotationAnchorMs] = useState(() => Date.now())
   const [messageAnchorMs, setMessageAnchorMs] = useState(() => Date.now())
+  const [messageDebugOffsetMs, setMessageDebugOffsetMs] = useState(0)
   const [pausedNowMs, setPausedNowMs] = useState<number | null>(null)
   const [isAutoPaused, setIsAutoPaused] = useState(() => typeof document !== 'undefined' ? document.hidden : false)
   const invalidNotified = useRef(false)
@@ -445,12 +435,15 @@ export default function PromotionsPage({
   const shouldUseSyncedClock = (activeWallScreenCount > 1 && activePromotions.length > 0) || shouldForceSyncedPaging
   const isCatalogOnlyScreen = hasSplitFeeds && !isDedicatedPromoScreen
   const useCompactCatalogMode = !shouldUseMixedSingleScreen && activePromotions.length > 0 && activePromotions.every((promotion) => promotion.sourceKind === 'catalog')
+  const shouldShowPromoChrome = !isCatalogOnlyScreen
+  const useCompactPromoHeader = shouldShowPromoChrome && activeRowsPerPage >= 7
   const visibleItemsPerPage = useCompactCatalogMode
     ? activeRowsPerPage >= 7
       ? Math.max(1, activeRowsPerPage * 2 - 2)
       : activeRowsPerPage * 2
-    : activeRowsPerPage
-  const shouldShowPromoChrome = !isCatalogOnlyScreen
+    : useCompactPromoHeader
+      ? 5
+      : activeRowsPerPage
   const isRotationPaused = debugRotationPaused || (isAutoPaused && !shouldUseSyncedClock)
   const staleAgeLabel = useMemo(() => {
     if (!staleSince) return null
@@ -599,17 +592,23 @@ export default function PromotionsPage({
 
   useEffect(() => {
     messageAnchorMsRef.current = Date.now()
-    const timeoutId = window.setTimeout(() => setMessageAnchorMs(messageAnchorMsRef.current), 0)
+    const timeoutId = window.setTimeout(() => {
+      setMessageAnchorMs(messageAnchorMsRef.current)
+      setMessageDebugOffsetMs(0)
+    }, 0)
 
     return () => window.clearTimeout(timeoutId)
   }, [messageSignature])
 
   const pageDurationsMs = useMemo(
-    () => activePromotions.map((promotion) => Math.max(PAGE_ROTATION_INTERVAL_MS, Math.ceil(promotion.details.length / visibleItemsPerPage) * DETAIL_ROTATION_INTERVAL_MS)),
+    () => activePromotions.map((promotion) => {
+      const pageCount = Math.max(1, buildToppedUpPages(promotion.details, visibleItemsPerPage).length)
+      return Math.max(PAGE_ROTATION_INTERVAL_MS, pageCount * DETAIL_ROTATION_INTERVAL_MS)
+    }),
     [activePromotions, visibleItemsPerPage],
   )
   const localVisiblePageCounts = useMemo(
-    () => activePromotions.map((promotion) => Math.max(1, Math.ceil(promotion.details.length / visibleItemsPerPage))),
+    () => activePromotions.map((promotion) => Math.max(1, buildToppedUpPages(promotion.details, visibleItemsPerPage).length)),
     [activePromotions, visibleItemsPerPage],
   )
   const localVisiblePageTotal = useMemo(
@@ -625,8 +624,9 @@ export default function PromotionsPage({
 
   useEffect(() => {
     if (debugMessageShift === 0) return
-    messageAnchorMsRef.current -= CLIENT_MESSAGE_ROTATION_INTERVAL_MS
-    const timeoutId = window.setTimeout(() => setMessageAnchorMs(messageAnchorMsRef.current), 0)
+    const timeoutId = window.setTimeout(() => {
+      setMessageDebugOffsetMs((prev) => prev + CLIENT_MESSAGE_ROTATION_INTERVAL_MS)
+    }, 0)
 
     return () => window.clearTimeout(timeoutId)
   }, [debugMessageShift])
@@ -646,7 +646,7 @@ export default function PromotionsPage({
   }, [currentPageDurationMs, debugPageShift])
 
   const currentPromotion = activePromotions[safePageIndex] ?? null
-  const detailPageCount = currentPromotion ? Math.max(1, Math.ceil(currentPromotion.details.length / visibleItemsPerPage)) : 1
+  const detailPageCount = currentPromotion ? Math.max(1, buildToppedUpPages(currentPromotion.details, visibleItemsPerPage).length) : 1
   const completedCycles = rotationCycleDurationMs > 0 ? Math.floor(elapsedPageMs / rotationCycleDurationMs) : 0
   const pageStartMs = rotationAnchorMs + completedCycles * rotationCycleDurationMs + currentPageOffsetMs
   const detailPageElapsedMs = detailPageCount > 1 ? Math.max(0, effectiveNowMs - pageStartMs) % DETAIL_ROTATION_INTERVAL_MS : 0
@@ -665,7 +665,7 @@ export default function PromotionsPage({
   const displayedRingElapsedMs = isWallSyncEnabled ? wallSlotElapsedMs : detailPageCount > 1 ? detailPageElapsedMs : Math.max(0, elapsedCycleMs - currentPageOffsetMs)
   const displayedPageStartedAtMs = isWallSyncEnabled ? syncedPageStartMs : pageStartMs
   const forcedDetailPageIndex = isWallSyncEnabled ? activeWallPage?.wallPageIndex ?? 0 : null
-  const elapsedMessageMs = isWallSyncEnabled ? wallElapsedMs : Math.max(0, effectiveNowMs - messageAnchorMs)
+  const elapsedMessageMs = (isWallSyncEnabled ? wallElapsedMs : Math.max(0, effectiveNowMs - messageAnchorMs)) + messageDebugOffsetMs
   const footerMessageIndex = activeMessages.length > 0 ? Math.floor(elapsedMessageMs / CLIENT_MESSAGE_ROTATION_INTERVAL_MS) % activeMessages.length : 0
   const footerMessageAnimation = reducedMotion ? '' : MESSAGE_ANIMATION_CLASSES[debugTextAnimationMode ?? (footerMessageIndex % MESSAGE_ANIMATION_CLASSES.length)]
   const wallLabel = normalizedWallScreenCount > 1 ? `экран ${actualWallScreenIndex + 1}/${normalizedWallScreenCount}` : null
@@ -730,6 +730,7 @@ export default function PromotionsPage({
               formatDate={formatDate}
               showPresentationChrome={shouldShowPromoChrome}
               compactCatalogMode={useCompactCatalogMode}
+              compactPromoHeader={useCompactPromoHeader}
               reducedMotion={reducedMotion}
             />
           )}

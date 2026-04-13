@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import PromoTable from './PromoTable'
 import { getPromotionPresentation } from '../features/promotions/format'
+import { buildToppedUpPages } from '../features/promotions/pagination'
 import type { Promotion, PromotionDetail } from '../features/promotions/types'
 
 const PROGRESS_CIRCUMFERENCE = 2 * Math.PI * 19
@@ -50,6 +51,7 @@ type Props = {
   formatDate: (value: string) => string
   showPresentationChrome?: boolean
   compactCatalogMode?: boolean
+  compactPromoHeader?: boolean
   reducedMotion?: boolean
 }
 
@@ -76,6 +78,7 @@ export default function PromoCard({
   formatDate,
   showPresentationChrome = true,
   compactCatalogMode = false,
+  compactPromoHeader = false,
   reducedMotion = false,
 }: Props) {
   const detailPageIndex = useMemo(() => {
@@ -99,17 +102,17 @@ export default function PromoCard({
       return visibleDetailsOverride
     }
 
-    const start = detailPageIndex * rowsPerPage
-    return promotion.details.slice(start, start + rowsPerPage)
+    const pages = buildToppedUpPages(promotion.details, rowsPerPage)
+    return pages[detailPageIndex] ?? pages[0] ?? []
   }, [detailPageIndex, detailPageCount, promotion.details, rowsPerPage, visibleDetailsOverride])
 
   useEffect(() => {
+    const pages = buildToppedUpPages(promotion.details, rowsPerPage)
     const pagesToWarm = [detailPageIndex, detailPageIndex + 1]
 
     for (const pageIndex of pagesToWarm) {
       const normalizedPageIndex = detailPageCount > 0 ? pageIndex % detailPageCount : 0
-      const start = normalizedPageIndex * rowsPerPage
-      const pageDetails = promotion.details.slice(start, start + rowsPerPage)
+      const pageDetails = pages[normalizedPageIndex] ?? []
 
       for (const detail of pageDetails) {
         const src = detail.item_img?.trim()
@@ -125,14 +128,13 @@ export default function PromoCard({
 
   const presentation = useMemo(() => getPromotionPresentation(promotion), [promotion])
 
-  const detailTableKey = `${promotion.marketing_promotion_id}-${detailPageIndex}`
   const normalizedRingElapsedMs = ringDurationMs > 0 ? ringElapsedMs % ringDurationMs : 0
   const normalizedRingProgress = ringDurationMs > 0 ? Math.max(0, Math.min(1, normalizedRingElapsedMs / ringDurationMs)) : 0
   const progressOffset = PROGRESS_CIRCUMFERENCE * (1 - normalizedRingProgress)
   const ringOpacity = showProgressIndicator ? resolveRingOpacity(normalizedRingProgress) : 0
 
   return (
-    <div className="promo-card">
+    <div className={`promo-card ${compactPromoHeader ? 'promo-card-compact-header' : ''}`}>
       {showPresentationChrome && (
         <div className="promo-head">
           <div className="promo-head-copy">
@@ -179,7 +181,6 @@ export default function PromoCard({
       )}
 
       <PromoTable
-        key={detailTableKey}
         details={visibleDetails}
         animationPhase={animationPhase}
         describeDetail={describeDetail}

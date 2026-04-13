@@ -387,6 +387,56 @@
   gap: var(--space-3);
 }
 
+.promo-card-compact-header .promo-head {
+  align-items: center;
+  gap: 14px;
+}
+
+.promo-card-compact-header .promo-head-copy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.promo-card-compact-header .promo-topline {
+  flex-wrap: nowrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.promo-card-compact-header .promo-kicker,
+.promo-card-compact-header .promo-subtitle {
+  display: none;
+}
+
+.promo-card-compact-header .promo-category-inline,
+.promo-card-compact-header .promo-date,
+.promo-card-compact-header .promo-title {
+  white-space: nowrap;
+}
+
+.promo-card-compact-header .promo-category-inline {
+  font-size: clamp(11px, 0.78vw, 15px);
+}
+
+.promo-card-compact-header .promo-date {
+  font-size: clamp(10px, 0.72vw, 13px);
+}
+
+.promo-card-compact-header .promo-title {
+  min-width: 0;
+  flex: 1;
+  font-size: clamp(18px, 1.35vw, 24px);
+  line-height: 1.02;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.promo-card-compact-header .promo-head-meta {
+  gap: 8px;
+}
+
 .promo-topline {
   display: flex;
   align-items: center;
@@ -762,6 +812,26 @@
   background: linear-gradient(135deg, rgba(255, 148, 81, 0.98), var(--accent));
   clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.16);
+}
+
+.card-badge-brand {
+  min-height: auto;
+  min-width: auto;
+  padding: 0;
+  color: var(--accent);
+  font-size: clamp(24px, 1.8vw, 38px);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  clip-path: none;
+  box-shadow: none;
+}
+
+.product-card-catalog .card-badge-brand {
+  font-size: clamp(18px, 1.25vw, 28px);
 }
 
 .promo-footer {

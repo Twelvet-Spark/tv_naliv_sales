@@ -129,6 +129,7 @@ export default function PromoTable({
           const oldPricePerLiter = computePricePerLiter(detail.price, volumeMl)
           const displayPrice = currentPricePerLiter ?? (hasNewPrice ? newPrice : detail.price)
           const badgeLabel = describeDetail(detail)
+          const badgeClassName = /\d/.test(badgeLabel) ? 'card-badge card-badge-brand' : 'card-badge'
           const rowClassName = [
             'product-card',
             compactCatalogMode ? 'product-card-catalog' : '',
@@ -167,7 +168,7 @@ export default function PromoTable({
                 <span className={`card-price ${hasNewPrice ? 'card-price-accent' : ''}`}>
                   {displayPrice !== null ? `${formatPrice(displayPrice)} ₸` : '—'}
                 </span>
-                {badgeLabel && <span className="card-badge">{badgeLabel}</span>}
+                {badgeLabel && <span className={badgeClassName}>{badgeLabel}</span>}
               </div>
             </div>
           )
