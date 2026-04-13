@@ -2,13 +2,14 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import TokenScreen from '../../components/TokenScreen'
-import type { PanelColorMode, TvWallConfig } from '../display/storage'
+import type { PanelColorMode, ReducedMotionMode, TvWallConfig } from '../display/storage'
 import {
   MAX_SAFE_AREA_PX,
   MAX_UI_SCALE_PERCENT,
   MIN_SAFE_AREA_PX,
   MIN_UI_SCALE_PERCENT,
   PANEL_COLOR_MODES,
+  REDUCED_MOTION_MODES,
   normalizeTvWallConfig,
 } from '../display/storage'
 
@@ -26,6 +27,7 @@ export default function TokenPage({ token, wallConfig, onSave, onPreviewPanelCol
   const [uiScaleValue, setUiScaleValue] = useState(String(wallConfig.uiScalePercent))
   const [safeAreaValue, setSafeAreaValue] = useState(String(wallConfig.safeAreaPx))
   const [panelColorModeValue, setPanelColorModeValue] = useState(wallConfig.panelColorMode)
+  const [reducedMotionModeValue, setReducedMotionModeValue] = useState<ReducedMotionMode>(wallConfig.reducedMotionMode)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const isInitialSetup = token.trim().length === 0
@@ -40,6 +42,7 @@ export default function TokenPage({ token, wallConfig, onSave, onPreviewPanelCol
     setUiScaleValue(String(wallConfig.uiScalePercent))
     setSafeAreaValue(String(wallConfig.safeAreaPx))
     setPanelColorModeValue(wallConfig.panelColorMode)
+    setReducedMotionModeValue(wallConfig.reducedMotionMode)
   }, [wallConfig])
 
   useEffect(() => {
@@ -56,6 +59,7 @@ export default function TokenPage({ token, wallConfig, onSave, onPreviewPanelCol
     const uiScalePercent = Number(uiScaleValue)
     const safeAreaPx = Number(safeAreaValue)
     const panelColorMode = panelColorModeValue
+    const reducedMotionMode = reducedMotionModeValue
 
     if (!next) {
       setError('Введите бизнес-токен, чтобы загрузить Акции на экран.')
@@ -87,12 +91,18 @@ export default function TokenPage({ token, wallConfig, onSave, onPreviewPanelCol
       return
     }
 
+    if (!REDUCED_MOTION_MODES.includes(reducedMotionMode)) {
+      setError('Выберите корректный режим сниженной анимации.')
+      return
+    }
+
     const nextWallConfig = normalizeTvWallConfig({
       screenCount,
       screenIndex: screenNumber - 1,
       uiScalePercent,
       safeAreaPx,
       panelColorMode,
+      reducedMotionMode,
     })
 
     setError(null)
@@ -116,6 +126,8 @@ export default function TokenPage({ token, wallConfig, onSave, onPreviewPanelCol
         onSafeAreaChange={setSafeAreaValue}
         panelColorModeValue={panelColorModeValue}
         onPanelColorModeChange={setPanelColorModeValue}
+        reducedMotionModeValue={reducedMotionModeValue}
+        onReducedMotionModeChange={setReducedMotionModeValue}
         onSubmit={handleSubmit}
         validationMessage={error}
       />

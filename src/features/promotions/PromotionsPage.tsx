@@ -9,6 +9,7 @@ import { getKzDayPeriod, resolveKzHour, type DebugMessageMode } from '../theme/k
 import { useKzGreeting } from '../theme/useKzGreeting'
 import { CLIENT_MESSAGE_ROTATION_INTERVAL_MS, DETAIL_ROTATION_INTERVAL_MS, PAGE_ROTATION_INTERVAL_MS, PROGRESS_TICK_INTERVAL_MS } from './constants'
 import { computeNewPrice, describeDetail, formatDate, formatPrice, formatStaleAge } from './format'
+import { parsePromotionItemName } from './parseItemName'
 import type { Promotion, PromotionDetail } from './types'
 import { isInvalidTokenMessage, usePromotions } from './usePromotions'
 
@@ -264,6 +265,93 @@ function getCatalogFeed(data: ReturnType<typeof usePromotions>['data']) {
   return data.filter((promotion) => promotion.sourceKind === 'catalog')
 }
 
+function getCatalogGroupKey(detail: PromotionDetail) {
+  const rawName = detail.item_name ?? ''
+  const { displayName } = parsePromotionItemName(rawName)
+  const normalizedName = displayName
+    .replace(/^пиво\s+розлив\s+/i, '')
+    .replace(/^пиво\s+/i, '')
+    .trim()
+
+  const [firstWord = normalizedName || rawName || 'товар'] = normalizedName.split(/\s+/)
+  return firstWord.trim().toLocaleLowerCase('ru-RU')
+}
+
+function sortCatalogDetails(details: PromotionDetail[]) {
+  return [...details].sort((left, right) => {
+    const leftKey = getCatalogGroupKey(left)
+    const rightKey = getCatalogGroupKey(right)
+
+    if (leftKey !== rightKey) {
+      return leftKey.localeCompare(rightKey, 'ru-RU')
+    }
+
+    const leftName = left.item_name ?? ''
+    const rightName = right.item_name ?? ''
+    return leftName.localeCompare(rightName, 'ru-RU')
+  })
+}
+
+function buildCatalogScreenFeed(
+  catalogFeed: ReturnType<typeof usePromotions>['data'],
+  screenCount: number,
+  screenIndex: number,
+  businessId: number | null,
+  businessName: string | null,
+): Promotion[] {
+  const safeScreenCount = Math.max(1, screenCount)
+  const safeScreenIndex = Math.max(0, Math.min(safeScreenCount - 1, screenIndex))
+  const sortedDetails = sortCatalogDetails(catalogFeed.flatMap((promotion) => promotion.details))
+
+  if (sortedDetails.length === 0) {
+    return []
+  }
+
+  const groupedDetails = new Map<string, PromotionDetail[]>()
+  for (const detail of sortedDetails) {
+    const key = getCatalogGroupKey(detail)
+    const existing = groupedDetails.get(key)
+    if (existing) {
+      existing.push(detail)
+    } else {
+      groupedDetails.set(key, [detail])
+    }
+  }
+
+  const sortedGroups = [...groupedDetails.entries()].sort(([left], [right]) => left.localeCompare(right, 'ru-RU'))
+  const distributionUnits = sortedGroups.length >= safeScreenCount ? sortedGroups.map(([, details]) => details) : sortedDetails.map((detail) => [detail])
+  const screenBuckets = Array.from({ length: safeScreenCount }, () => [] as PromotionDetail[])
+
+  distributionUnits.forEach((groupDetails, index) => {
+    screenBuckets[index % safeScreenCount].push(...groupDetails)
+  })
+
+  const assignedDetails = screenBuckets[safeScreenIndex] ?? []
+  if (assignedDetails.length === 0) {
+    return []
+  }
+
+  const basePromotion = catalogFeed[0] ?? null
+  if (!basePromotion) {
+    return []
+  }
+
+  const catalogName = businessName ? `Позиции ${businessName}` : 'Позиции категории'
+
+  return [
+    {
+      marketing_promotion_id: (businessId ?? basePromotion.marketing_promotion_id) * 100 + safeScreenIndex + 20,
+      sourceKind: 'catalog',
+      name: catalogName,
+      internal_name: catalogName,
+      cover: basePromotion.cover,
+      start_promotion_date: basePromotion.start_promotion_date,
+      end_promotion_date: basePromotion.end_promotion_date,
+      details: assignedDetails,
+    },
+  ]
+}
+
 type Props = {
   token: string
   wallScreenCount?: number
@@ -276,6 +364,7 @@ type Props = {
   debugTextAnimationMode?: number | null
   debugPageShift?: { seq: number; delta: number }
   debugMessageShift?: number
+  reducedMotion?: boolean
   onInvalidToken?: () => void
 }
 
@@ -291,6 +380,7 @@ export default function PromotionsPage({
   debugTextAnimationMode = null,
   debugPageShift = { seq: 0, delta: 0 },
   debugMessageShift = 0,
+  reducedMotion = false,
   onInvalidToken,
 }: Props) {
   const { status, data, businessId, businessName, businessAddress, error, isStale, staleSince, source } = usePromotions(token)
@@ -321,30 +411,34 @@ export default function PromotionsPage({
   const footerScreenIndex = resolveFooterScreenIndex(normalizedWallScreenCount)
   const hasSplitFeeds = normalizedWallScreenCount > 1 && promotionalFeed.length > 0 && catalogFeed.length > 0
   const isDedicatedPromoScreen = hasSplitFeeds && actualWallScreenIndex === footerScreenIndex
+  const catalogScreenCount = Math.max(1, normalizedWallScreenCount - 1)
+  const catalogScreenIndex = actualWallScreenIndex > footerScreenIndex ? actualWallScreenIndex - 1 : actualWallScreenIndex
+  const catalogScreenFeed = useMemo(
+    () => hasSplitFeeds ? buildCatalogScreenFeed(catalogFeed, catalogScreenCount, catalogScreenIndex, businessId, businessName) : [],
+    [businessId, businessName, catalogFeed, catalogScreenCount, catalogScreenIndex, hasSplitFeeds],
+  )
   const activePromotions = shouldUseMixedSingleScreen
     ? singleScreenMixedFeed
     : hasSplitFeeds
       ? isDedicatedPromoScreen
         ? promotionalFeed
-        : catalogFeed
+        : catalogScreenFeed
       : catalogFeed.length > 0 && promotionalFeed.length === 0
         ? catalogFeed
         : promotionalFeed.length > 0 && catalogFeed.length === 0
           ? promotionalFeed
         : data
   const activeRowsPerPage = rowsPerPage
-  const activeWallScreenCount = hasSplitFeeds ? (isDedicatedPromoScreen ? 1 : normalizedWallScreenCount - 1) : normalizedWallScreenCount
-  const activeWallScreenIndex = hasSplitFeeds
-    ? isDedicatedPromoScreen
-      ? 0
-      : actualWallScreenIndex > footerScreenIndex
-        ? actualWallScreenIndex - 1
-        : actualWallScreenIndex
-    : actualWallScreenIndex
-  const shouldForceSyncedPaging = isDedicatedPromoScreen && promotionalFeed.length > 0
+  const activeWallScreenCount = hasSplitFeeds ? 1 : normalizedWallScreenCount
+  const activeWallScreenIndex = hasSplitFeeds ? 0 : actualWallScreenIndex
+  const shouldForceSyncedPaging = hasSplitFeeds
   const isWallSyncRequested = normalizedWallScreenCount > 1
   const shouldShowFooterCopy = actualWallScreenIndex === footerScreenIndex
   const shouldUseSyncedClock = (activeWallScreenCount > 1 && activePromotions.length > 0) || shouldForceSyncedPaging
+  const isCatalogOnlyScreen = hasSplitFeeds && !isDedicatedPromoScreen
+  const useCompactCatalogMode = !shouldUseMixedSingleScreen && activePromotions.length > 0 && activePromotions.every((promotion) => promotion.sourceKind === 'catalog')
+  const visibleItemsPerPage = useCompactCatalogMode ? activeRowsPerPage * 2 : activeRowsPerPage
+  const shouldShowPromoChrome = !isCatalogOnlyScreen
   const isRotationPaused = debugRotationPaused || (isAutoPaused && !shouldUseSyncedClock)
   const staleAgeLabel = useMemo(() => {
     if (!staleSince) return null
@@ -379,7 +473,7 @@ export default function PromotionsPage({
     const intervalId = window.setInterval(() => {
       if (isRotationPaused) return
       setNowMs(Date.now())
-    }, PROGRESS_TICK_INTERVAL_MS)
+    }, reducedMotion ? 250 : PROGRESS_TICK_INTERVAL_MS)
 
     const handleVisibilityChange = () => {
       const currentNow = Date.now()
@@ -422,7 +516,7 @@ export default function PromotionsPage({
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('focus', handleFocus)
     }
-  }, [activePromotions.length, isRotationPaused, source])
+  }, [activePromotions.length, isRotationPaused, reducedMotion, source])
 
   const rotationSignature = useMemo(() => activePromotions.map((promotion) => `${promotion.sourceKind}:${promotion.marketing_promotion_id}`).join(':'), [activePromotions])
 
@@ -499,18 +593,18 @@ export default function PromotionsPage({
   }, [messageSignature])
 
   const pageDurationsMs = useMemo(
-    () => activePromotions.map((promotion) => Math.max(PAGE_ROTATION_INTERVAL_MS, Math.ceil(promotion.details.length / activeRowsPerPage) * DETAIL_ROTATION_INTERVAL_MS)),
-    [activePromotions, activeRowsPerPage],
+    () => activePromotions.map((promotion) => Math.max(PAGE_ROTATION_INTERVAL_MS, Math.ceil(promotion.details.length / visibleItemsPerPage) * DETAIL_ROTATION_INTERVAL_MS)),
+    [activePromotions, visibleItemsPerPage],
   )
   const localVisiblePageCounts = useMemo(
-    () => activePromotions.map((promotion) => Math.max(1, Math.ceil(promotion.details.length / activeRowsPerPage))),
-    [activePromotions, activeRowsPerPage],
+    () => activePromotions.map((promotion) => Math.max(1, Math.ceil(promotion.details.length / visibleItemsPerPage))),
+    [activePromotions, visibleItemsPerPage],
   )
   const localVisiblePageTotal = useMemo(
     () => localVisiblePageCounts.reduce((total, count) => total + count, 0),
     [localVisiblePageCounts],
   )
-  const wallPages = useMemo(() => buildPromotionWallPages(activePromotions, activeRowsPerPage, activeWallScreenCount), [activePromotions, activeRowsPerPage, activeWallScreenCount])
+  const wallPages = useMemo(() => buildPromotionWallPages(activePromotions, visibleItemsPerPage, activeWallScreenCount), [activePromotions, activeWallScreenCount, visibleItemsPerPage])
   const isWallSyncEnabled = wallPages.length > 0 && ((activeWallScreenCount > 1 && isWallSyncRequested) || shouldForceSyncedPaging)
   const rotationCycleDurationMs = useMemo(
     () => pageDurationsMs.reduce((total, duration) => total + duration, 0),
@@ -540,7 +634,7 @@ export default function PromotionsPage({
   }, [currentPageDurationMs, debugPageShift])
 
   const currentPromotion = activePromotions[safePageIndex] ?? null
-  const detailPageCount = currentPromotion ? Math.max(1, Math.ceil(currentPromotion.details.length / activeRowsPerPage)) : 1
+  const detailPageCount = currentPromotion ? Math.max(1, Math.ceil(currentPromotion.details.length / visibleItemsPerPage)) : 1
   const completedCycles = rotationCycleDurationMs > 0 ? Math.floor(elapsedPageMs / rotationCycleDurationMs) : 0
   const pageStartMs = rotationAnchorMs + completedCycles * rotationCycleDurationMs + currentPageOffsetMs
   const detailPageElapsedMs = detailPageCount > 1 ? Math.max(0, effectiveNowMs - pageStartMs) % DETAIL_ROTATION_INTERVAL_MS : 0
@@ -561,7 +655,7 @@ export default function PromotionsPage({
   const forcedDetailPageIndex = isWallSyncEnabled ? activeWallPage?.wallPageIndex ?? 0 : null
   const elapsedMessageMs = isWallSyncEnabled ? wallElapsedMs : Math.max(0, effectiveNowMs - messageAnchorMs)
   const footerMessageIndex = activeMessages.length > 0 ? Math.floor(elapsedMessageMs / CLIENT_MESSAGE_ROTATION_INTERVAL_MS) % activeMessages.length : 0
-  const footerMessageAnimation = MESSAGE_ANIMATION_CLASSES[debugTextAnimationMode ?? (footerMessageIndex % MESSAGE_ANIMATION_CLASSES.length)]
+  const footerMessageAnimation = reducedMotion ? '' : MESSAGE_ANIMATION_CLASSES[debugTextAnimationMode ?? (footerMessageIndex % MESSAGE_ANIMATION_CLASSES.length)]
   const wallLabel = normalizedWallScreenCount > 1 ? `экран ${actualWallScreenIndex + 1}/${normalizedWallScreenCount}` : null
   const displayProgressTotal = isWallSyncEnabled ? wallPages.length : localVisiblePageTotal
   const displayProgressIndex = isWallSyncEnabled
@@ -586,9 +680,9 @@ export default function PromotionsPage({
       promotionId: currentPromotion.marketing_promotion_id,
       detailCount: currentPromotion.details.length,
       detailPageCount,
-      rowsPerPage: activeRowsPerPage,
+      rowsPerPage: visibleItemsPerPage,
     })
-  }, [activeRowsPerPage, activeWallScreenCount, activeWallScreenIndex, currentPromotion, detailPageCount, isWallSyncEnabled, syncedVisibleDetails?.length, wallPages.length])
+  }, [activeWallScreenCount, activeWallScreenIndex, currentPromotion, detailPageCount, isWallSyncEnabled, syncedVisibleDetails?.length, visibleItemsPerPage, wallPages.length])
 
   return (
     <Layout hideHeader>
@@ -601,9 +695,9 @@ export default function PromotionsPage({
 
           {status === 'success' && activePromotions.length > 0 && displayedPromotion && (
             <PromoCard
-              key={isWallSyncEnabled ? `${displayedPromotion.sourceKind}-${displayedPromotion.marketing_promotion_id}-${forcedDetailPageIndex ?? 0}-${actualWallScreenIndex}` : `${displayedPromotion.sourceKind}-${displayedPromotion.marketing_promotion_id}-${activeRowsPerPage}`}
+              key={isWallSyncEnabled ? `${displayedPromotion.sourceKind}-${displayedPromotion.marketing_promotion_id}-${forcedDetailPageIndex ?? 0}-${actualWallScreenIndex}` : `${displayedPromotion.sourceKind}-${displayedPromotion.marketing_promotion_id}-${visibleItemsPerPage}`}
               promotion={displayedPromotion}
-              rowsPerPage={activeRowsPerPage}
+              rowsPerPage={visibleItemsPerPage}
               detailDurationMs={DETAIL_ROTATION_INTERVAL_MS}
               detailPageCount={displayedDetailPageCount}
               forcedDetailPageIndex={forcedDetailPageIndex}
@@ -622,6 +716,9 @@ export default function PromotionsPage({
               formatPrice={formatPrice}
               computeNewPrice={computeNewPrice}
               formatDate={formatDate}
+              showPresentationChrome={shouldShowPromoChrome}
+              compactCatalogMode={useCompactCatalogMode}
+              reducedMotion={reducedMotion}
             />
           )}
 
@@ -637,12 +734,12 @@ export default function PromotionsPage({
           )}
         </div>
 
-        {(status === 'success' || status === 'offline') && featureFlags.richUi && (
+        {(status === 'success' || status === 'offline') && featureFlags.richUi && shouldShowPromoChrome && (
           <div className="tech-overlay" aria-hidden>
             <span className={`tech-dot ${source === 'live' ? 'tech-dot-live' : ''}`} />
             <span>{source === 'live' ? 'онлайн' : 'кэш'}</span>
             <span className="tech-divider">·</span>
-            <span>видно: {activeRowsPerPage}</span>
+            <span>видно: {visibleItemsPerPage}</span>
             {hasSplitFeeds && <span className="tech-divider">·</span>}
             {hasSplitFeeds && <span>{isDedicatedPromoScreen ? 'промо' : 'каталог'}</span>}
             {wallLabel && <span className="tech-divider">·</span>}

@@ -9,6 +9,8 @@ type Props = {
   describeDetail: (detail: PromotionDetail) => string
   formatPrice: (value: number | null) => string
   computeNewPrice: (detail: PromotionDetail) => number | null
+  showListHeader?: boolean
+  compactCatalogMode?: boolean
 }
 
 function computePricePerLiter(value: number | null, volumeMl: number | null) {
@@ -86,7 +88,15 @@ function DetailThumbnail({ src, alt, detailId }: { src: string | null; alt: stri
   )
 }
 
-export default function PromoTable({ details, animationPhase, describeDetail, formatPrice, computeNewPrice }: Props) {
+export default function PromoTable({
+  details,
+  animationPhase,
+  describeDetail,
+  formatPrice,
+  computeNewPrice,
+  showListHeader = true,
+  compactCatalogMode = false,
+}: Props) {
   const commonPrefix = useMemo(() => {
     const names = details.map((d) => d.item_name).filter((n): n is string => n != null)
     return extractCommonPrefix(names)
@@ -94,11 +104,13 @@ export default function PromoTable({ details, animationPhase, describeDetail, fo
 
   return (
     <div className="promo-table-wrap">
-      <div className="card-list-header" role="row">
-        <span className="card-list-header-price">Цена за 1 л</span>
-      </div>
+      {showListHeader && (
+        <div className="card-list-header" role="row">
+          <span className="card-list-header-price">Цена за 1 л</span>
+        </div>
+      )}
 
-      <div className="promo-table-list">
+      <div className={`promo-table-list ${compactCatalogMode ? 'promo-table-list-catalog' : ''}`}>
         {details.length === 0 && (
           <div className="promo-table-empty">
             Для этой акции пока нет позиций.
@@ -118,6 +130,7 @@ export default function PromoTable({ details, animationPhase, describeDetail, fo
           const badgeLabel = describeDetail(detail)
           const rowClassName = [
             'product-card',
+            compactCatalogMode ? 'product-card-catalog' : '',
             animationPhase === 'enter' ? 'row-phase-enter' : '',
             animationPhase === 'exit' ? 'row-phase-exit' : '',
           ].filter(Boolean).join(' ')

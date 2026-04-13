@@ -47,6 +47,9 @@ type Props = {
   formatPrice: (value: number | null) => string
   computeNewPrice: (detail: PromotionDetail) => number | null
   formatDate: (value: string) => string
+  showPresentationChrome?: boolean
+  compactCatalogMode?: boolean
+  reducedMotion?: boolean
 }
 
 export default function PromoCard({
@@ -70,6 +73,9 @@ export default function PromoCard({
   formatPrice,
   computeNewPrice,
   formatDate,
+  showPresentationChrome = true,
+  compactCatalogMode = false,
+  reducedMotion = false,
 }: Props) {
   const detailPageIndex = useMemo(() => {
     if (forcedDetailPageIndex !== null) {
@@ -85,7 +91,7 @@ export default function PromoCard({
     return Math.max(0, nowMs - pageStartedAtMs) % detailDurationMs
   }, [detailDurationMs, detailPageCount, nowMs, pageStartedAtMs])
 
-  const animationPhase = detailPageCount > 1 && detailPageElapsedMs >= detailDurationMs - DETAIL_EXIT_WINDOW_MS ? 'exit' : 'enter'
+  const animationPhase = reducedMotion ? 'idle' : detailPageCount > 1 && detailPageElapsedMs >= detailDurationMs - DETAIL_EXIT_WINDOW_MS ? 'exit' : 'enter'
 
   const visibleDetails = useMemo(() => {
     if (visibleDetailsOverride !== null) {
@@ -116,48 +122,50 @@ export default function PromoCard({
 
   return (
     <div className="promo-card">
-      <div className="promo-head">
-        <div className="promo-head-copy">
-          <div className="promo-topline">
-            <span className="promo-category-inline">{presentation.categoryLabel}</span>
-            <span className="promo-date">
-              {formatDate(promotion.start_promotion_date)} — {formatDate(promotion.end_promotion_date)}
-            </span>
-          </div>
-          <span className="promo-kicker">{presentation.kicker}</span>
-          <h2 className="promo-title">{presentation.title}</h2>
-          <p className="promo-subtitle">{presentation.subtitle}</p>
-        </div>
-        <div className="promo-head-meta">
-          {showProgressIndicator && (
-            <div className="promo-progress" aria-label="Индикатор времени показа">
-              <svg className="promo-progress-ring" viewBox="0 0 48 48" aria-hidden>
-                <circle className="promo-progress-track" cx="24" cy="24" r="19" />
-                <circle
-                  className="promo-progress-value"
-                  cx="24"
-                  cy="24"
-                  r="19"
-                  style={{
-                    strokeDasharray: PROGRESS_CIRCUMFERENCE,
-                    strokeDashoffset: progressOffset,
-                    opacity: ringOpacity,
-                    transition: isRotationPaused ? 'none' : 'stroke-dashoffset 120ms linear, opacity 160ms linear',
-                  }}
-                />
-              </svg>
-              <span className="promo-progress-number">{progressIndex + 1}/{progressTotal}</span>
+      {showPresentationChrome && (
+        <div className="promo-head">
+          <div className="promo-head-copy">
+            <div className="promo-topline">
+              <span className="promo-category-inline">{presentation.categoryLabel}</span>
+              <span className="promo-date">
+                {formatDate(promotion.start_promotion_date)} — {formatDate(promotion.end_promotion_date)}
+              </span>
             </div>
-          )}
-          {promoCount > 1 && (
-            <span className="promo-page-dots">
-              {Array.from({ length: promoCount }, (_, i) => (
-                <span key={i} className={`promo-dot ${i === promoIndex ? 'promo-dot-active' : ''}`} />
-              ))}
-            </span>
-          )}
+            <span className="promo-kicker">{presentation.kicker}</span>
+            <h2 className="promo-title">{presentation.title}</h2>
+            <p className="promo-subtitle">{presentation.subtitle}</p>
+          </div>
+          <div className="promo-head-meta">
+            {showProgressIndicator && (
+              <div className="promo-progress" aria-label="Индикатор времени показа">
+                <svg className="promo-progress-ring" viewBox="0 0 48 48" aria-hidden>
+                  <circle className="promo-progress-track" cx="24" cy="24" r="19" />
+                  <circle
+                    className="promo-progress-value"
+                    cx="24"
+                    cy="24"
+                    r="19"
+                    style={{
+                      strokeDasharray: PROGRESS_CIRCUMFERENCE,
+                      strokeDashoffset: progressOffset,
+                      opacity: ringOpacity,
+                      transition: isRotationPaused || reducedMotion ? 'none' : 'stroke-dashoffset 120ms linear, opacity 160ms linear',
+                    }}
+                  />
+                </svg>
+                <span className="promo-progress-number">{progressIndex + 1}/{progressTotal}</span>
+              </div>
+            )}
+            {promoCount > 1 && (
+              <span className="promo-page-dots">
+                {Array.from({ length: promoCount }, (_, i) => (
+                  <span key={i} className={`promo-dot ${i === promoIndex ? 'promo-dot-active' : ''}`} />
+                ))}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <PromoTable
         key={detailTableKey}
@@ -166,6 +174,8 @@ export default function PromoCard({
         describeDetail={describeDetail}
         formatPrice={formatPrice}
         computeNewPrice={computeNewPrice}
+        showListHeader={showPresentationChrome}
+        compactCatalogMode={compactCatalogMode}
       />
     </div>
   )

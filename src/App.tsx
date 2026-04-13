@@ -104,7 +104,7 @@ function getInitialDebugHour() {
 }
 
 function App() {
-  useViewportDensity()
+  const performanceTier = useViewportDensity()
 
   const envToken = import.meta.env.VITE_TV_BUSINESS_TOKEN ?? ''
   const [token, setToken] = useState(() => getInitialToken(envToken))
@@ -121,6 +121,7 @@ function App() {
   const navigate = useNavigate()
   const themeMode = useKzThemeMode(debugHour)
   const activePanelColorMode = previewPanelColorMode ?? wallConfig.panelColorMode
+  const isReducedPerformanceMode = wallConfig.reducedMotionMode === 'on' || (wallConfig.reducedMotionMode === 'auto' && performanceTier === 'reduced')
 
   useEffect(() => {
     document.documentElement.dataset.theme = themeMode
@@ -187,7 +188,8 @@ function App() {
     root.style.setProperty('--ui-scale-factor', String(wallConfig.uiScalePercent / 100))
     root.style.setProperty('--safe-area-size', `${wallConfig.safeAreaPx}px`)
     root.dataset.panelColorMode = activePanelColorMode
-  }, [activePanelColorMode, wallConfig.safeAreaPx, wallConfig.uiScalePercent])
+    root.dataset.reducedMotion = isReducedPerformanceMode ? 'on' : 'off'
+  }, [activePanelColorMode, isReducedPerformanceMode, wallConfig.safeAreaPx, wallConfig.uiScalePercent])
 
   useEffect(() => {
     const root = document.documentElement
@@ -252,6 +254,7 @@ function App() {
       debugTextAnimationMode={debugTextAnimationMode}
       debugPageShift={debugPageShift}
       debugMessageShift={debugMessageShift}
+      reducedMotion={isReducedPerformanceMode}
       onInvalidToken={handleInvalidToken}
     />
   ) : (

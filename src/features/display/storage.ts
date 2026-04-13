@@ -1,4 +1,5 @@
 export type PanelColorMode = 'high' | 'low'
+export type ReducedMotionMode = 'auto' | 'on' | 'off'
 
 export type TvWallConfig = {
   screenCount: number
@@ -6,6 +7,7 @@ export type TvWallConfig = {
   uiScalePercent: number
   safeAreaPx: number
   panelColorMode: PanelColorMode
+  reducedMotionMode: ReducedMotionMode
 }
 
 const STORAGE_KEY = 'tv_wall_config'
@@ -16,6 +18,7 @@ export const MAX_UI_SCALE_PERCENT = 150
 export const MIN_SAFE_AREA_PX = 0
 export const MAX_SAFE_AREA_PX = 64
 export const PANEL_COLOR_MODES: PanelColorMode[] = ['high', 'low']
+export const REDUCED_MOTION_MODES: ReducedMotionMode[] = ['auto', 'on', 'off']
 
 function normalizeScreenCount(value: number | null | undefined) {
   if (!Number.isInteger(value)) return 1
@@ -42,12 +45,18 @@ function normalizePanelColorMode(value: string | null | undefined): PanelColorMo
   return 'high'
 }
 
+function normalizeReducedMotionMode(value: string | null | undefined): ReducedMotionMode {
+  if (value === 'on' || value === 'off') return value
+  return 'auto'
+}
+
 export function normalizeTvWallConfig(value?: Partial<TvWallConfig> | null): TvWallConfig {
   const screenCount = normalizeScreenCount(value?.screenCount)
   const screenIndex = normalizeScreenIndex(value?.screenIndex, screenCount)
   const uiScalePercent = normalizeUiScalePercent(value?.uiScalePercent)
   const safeAreaPx = normalizeSafeAreaPx(value?.safeAreaPx)
   const panelColorMode = normalizePanelColorMode(value?.panelColorMode)
+  const reducedMotionMode = normalizeReducedMotionMode(value?.reducedMotionMode)
 
   return {
     screenCount,
@@ -55,6 +64,7 @@ export function normalizeTvWallConfig(value?: Partial<TvWallConfig> | null): TvW
     uiScalePercent,
     safeAreaPx,
     panelColorMode,
+    reducedMotionMode,
   }
 }
 

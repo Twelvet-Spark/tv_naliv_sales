@@ -496,6 +496,13 @@
   overflow: hidden;
 }
 
+.promo-table-list-catalog {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+  align-content: start;
+}
+
 .promo-table-empty {
   display: grid;
   place-items: center;
@@ -513,6 +520,71 @@
   padding: 0 0 14px;
   border-bottom: 1px solid var(--line);
   opacity: 1;
+}
+
+.product-card-catalog {
+  gap: 12px;
+  padding: 0 0 10px;
+}
+
+.product-card-catalog .card-left {
+  gap: 12px;
+}
+
+.product-card-catalog .card-thumb,
+.product-card-catalog .card-thumb-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+}
+
+.product-card-catalog .card-info {
+  gap: 6px;
+}
+
+.product-card-catalog .card-name {
+  font-size: clamp(16px, 1.35vw, 22px);
+  -webkit-line-clamp: 2;
+}
+
+.product-card-catalog .card-meta-line {
+  grid-template-columns: 62px minmax(0, 1fr);
+  column-gap: 10px;
+  min-height: 24px;
+}
+
+.product-card-catalog .card-abv {
+  font-size: clamp(11px, 0.85vw, 15px);
+}
+
+.product-card-catalog .card-tags {
+  gap: 6px;
+}
+
+.product-card-catalog .card-tag {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: clamp(9px, 0.7vw, 12px);
+}
+
+.product-card-catalog .card-right {
+  min-width: 120px;
+  gap: 4px;
+}
+
+.product-card-catalog .card-old-price {
+  font-size: clamp(11px, 0.82vw, 14px);
+}
+
+.product-card-catalog .card-price {
+  font-size: clamp(18px, 1.6vw, 26px);
+}
+
+.product-card-catalog .card-badge {
+  min-height: 34px;
+  min-width: 84px;
+  padding: 0 12px;
+  font-size: clamp(10px, 0.8vw, 14px);
 }
 
 .row-phase-enter {
@@ -1641,6 +1713,56 @@
   .app-ambient {
     animation-duration: 320s;
   }
+}
+
+:root[data-reduced-motion='on'] {
+  --motion-200: 0ms linear;
+  --motion-300: 0ms linear;
+  --motion-swap: 0ms linear;
+}
+
+:root[data-reduced-motion='on'] .app-shell {
+  transition: none;
+}
+
+:root[data-reduced-motion='on'] .app-shell::before,
+:root[data-reduced-motion='on'] .app-shell::after,
+:root[data-reduced-motion='on'] .app-ambient,
+:root[data-reduced-motion='on'] .app-content-layer,
+:root[data-reduced-motion='on'] .tech-overlay,
+:root[data-reduced-motion='on'] .admin-exit-trigger,
+:root[data-reduced-motion='on'] .time-debug-panel,
+:root[data-reduced-motion='on'] .promo-table-list,
+:root[data-reduced-motion='on'] .row-phase-enter,
+:root[data-reduced-motion='on'] .row-phase-exit,
+:root[data-reduced-motion='on'] .promo-message {
+  animation: none !important;
+}
+
+:root[data-reduced-motion='on'] .app-shell::before,
+:root[data-reduced-motion='on'] .app-shell::after,
+:root[data-reduced-motion='on'] .app-ambient,
+:root[data-reduced-motion='on'] .app-content-layer {
+  will-change: auto;
+}
+
+:root[data-reduced-motion='on'] .glass-surface,
+:root[data-reduced-motion='on'] .time-debug-panel,
+:root[data-reduced-motion='on'] .admin-exit-modal-backdrop {
+  backdrop-filter: none;
+}
+
+:root[data-reduced-motion='on'] .card-thumb,
+:root[data-reduced-motion='on'] .card-badge,
+:root[data-reduced-motion='on'] .promo-progress-value,
+:root[data-reduced-motion='on'] .admin-exit-trigger,
+:root[data-reduced-motion='on'] .time-debug-button {
+  transition: none !important;
+}
+
+:root[data-reduced-motion='on'] .card-thumb,
+:root[data-reduced-motion='on'] .card-badge {
+  box-shadow: none;
 }
 
 @media (max-width: 1320px) and (max-aspect-ratio: 3/2) {

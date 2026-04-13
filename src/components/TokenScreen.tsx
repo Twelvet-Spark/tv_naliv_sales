@@ -18,6 +18,8 @@ type Props = {
   onSafeAreaChange: (value: string) => void
   panelColorModeValue: 'high' | 'low'
   onPanelColorModeChange: (value: 'high' | 'low') => void
+  reducedMotionModeValue: 'auto' | 'on' | 'off'
+  onReducedMotionModeChange: (value: 'auto' | 'on' | 'off') => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   validationMessage?: string | null
 }
@@ -36,12 +38,15 @@ export default function TokenScreen({
   onSafeAreaChange,
   panelColorModeValue,
   onPanelColorModeChange,
+  reducedMotionModeValue,
+  onReducedMotionModeChange,
   onSubmit,
   validationMessage,
 }: Props) {
   const metrics = useViewportMetrics()
   const title = isInitialSetup ? 'Настройка экрана' : 'Настройки экрана'
   const submitLabel = isInitialSetup ? 'Сохранить' : 'Применить'
+  const isLowResTv = metrics?.density === 'low-res-tv'
 
   return (
     <div className={`token-screen ${isInitialSetup ? 'token-screen-initial' : 'token-screen-edit'}`}>
@@ -134,6 +139,21 @@ export default function TokenScreen({
               >
                 <option value="high">Высокий</option>
                 <option value="low">Низкий</option>
+              </select>
+            </label>
+            <label className="glass-input-field token-select-field">
+              <span className="token-input-label">Сниженная анимация</span>
+              <select
+                className="glass-input token-select"
+                value={reducedMotionModeValue}
+                onChange={(event) => {
+                  const value = event.target.value
+                  onReducedMotionModeChange(value === 'on' || value === 'off' ? value : 'auto')
+                }}
+              >
+                <option value="auto">Авто{isLowResTv ? ' · сейчас включится' : ''}</option>
+                <option value="on">Вкл</option>
+                <option value="off">Выкл</option>
               </select>
             </label>
           </div>
