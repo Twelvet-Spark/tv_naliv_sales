@@ -65,15 +65,21 @@ npm run dev
 ### Docker / Coolify
 
 ```bash
-docker build -t naliv-tv-akcii .
+docker build \
+	--build-arg VITE_TV_API_URL=https://njt25.naliv.kz \
+	--build-arg VITE_TV_ALLOW_TOKEN_EDIT=false \
+	-t naliv-tv-akcii .
 docker run -p 8080:80 naliv-tv-akcii
 ```
 
-- Базовые образы в Dockerfile закреплены на актуальных версиях (`node:22-alpine`, `caddy:2.9.1-alpine`).
-- Для внешнего API укажите `VITE_TV_API_URL` на этапе сборки в переменных окружения Coolify.
+- Базовые образы закреплены на конкретных патч-версиях: `node:22.22.2-alpine3.23` для build-stage и `caddy:2.11.2-alpine` для runtime.
+- Dockerfile теперь принимает все `VITE_TV_*` параметры как `--build-arg`. Для Coolify задавайте их в секции Build Variables, а не только в Runtime Variables.
+- Это статический Vite bundle: любые `VITE_*` значения встраиваются в собранный JavaScript и доступны клиенту в браузере. Не используйте `VITE_TV_BUSINESS_TOKEN` как секрет.
+- Для внешнего API укажите `VITE_TV_API_URL` именно на этапе сборки. Изменение этого значения требует нового build/redeploy.
 - Если один и тот же деплой в Coolify должен обслуживать разные ТВ с разными бизнесами, не задавайте общий `VITE_TV_BUSINESS_TOKEN` на уровне сборки. В этом сценарии токен вводится отдельно на каждом устройстве и хранится локально в браузере ТВ.
-- Если для всех телевизоров должен использоваться один и тот же бизнес, задайте `VITE_TV_BUSINESS_TOKEN` в Coolify и при необходимости отключите `/token` через `VITE_TV_ALLOW_TOKEN_EDIT=false`.
+- Если для всех телевизоров должен использоваться один и тот же бизнес, задайте `VITE_TV_BUSINESS_TOKEN` как Build Variable в Coolify и при необходимости отключите `/token` через `VITE_TV_ALLOW_TOKEN_EDIT=false`.
 - Если несколько ТВ должны показывать одну общую ленту без дублей, на каждом устройстве укажите одинаковое количество экранов, но разный номер ТВ: например `3 / 1`, `3 / 2`, `3 / 3`.
+- В контейнер добавлен `HEALTHCHECK` на `/`, поэтому в Coolify можно использовать стандартную HTTP-проверку корня без отдельного endpoint.
 
 ## Команды
 
