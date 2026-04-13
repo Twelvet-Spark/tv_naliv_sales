@@ -27,7 +27,7 @@ export default function TokenScreen({
 }: Props) {
   return (
     <div className="token-screen">
-      <GlassHeader>
+      <GlassHeader className="token-intro">
         <div className="layout-heading">
           <p className="eyebrow">НАЛИВ ТВ</p>
           <h1>Подключение экрана</h1>
@@ -35,7 +35,7 @@ export default function TokenScreen({
         </div>
       </GlassHeader>
 
-      <TokenSurface className="promo-card">
+      <TokenSurface className="promo-card token-panel">
         <form className="token-form" onSubmit={onSubmit}>
           <TokenInput
             label="Бизнес-токен"

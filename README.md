@@ -73,6 +73,7 @@ docker run -p 8080:80 naliv-tv-akcii
 ```
 
 - Базовые образы закреплены на конкретных патч-версиях: `node:22.22.2-alpine3.23` для build-stage и `caddy:2.11.2-alpine` для runtime.
+- Этот Docker-образ поднимает только статический frontend через Caddy. Backend-сервера в этом репозитории нет: данные по акциям читаются с внешнего API `VITE_TV_API_URL`.
 - Dockerfile теперь принимает все `VITE_TV_*` параметры как `--build-arg`. Для Coolify задавайте их в секции Build Variables, а не только в Runtime Variables.
 - Это статический Vite bundle: любые `VITE_*` значения встраиваются в собранный JavaScript и доступны клиенту в браузере. Не используйте `VITE_TV_BUSINESS_TOKEN` как секрет.
 - Для внешнего API укажите `VITE_TV_API_URL` именно на этапе сборки. Изменение этого значения требует нового build/redeploy.
