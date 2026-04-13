@@ -554,6 +554,7 @@
   display: grid;
   gap: 10px;
   min-width: 0;
+  align-content: center;
 }
 
 .card-name {
@@ -562,6 +563,10 @@
   font-weight: 800;
   line-height: 1.08;
   letter-spacing: -0.02em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .card-meta-line {
@@ -587,9 +592,11 @@
 
 .card-tags {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .card-tag {
@@ -603,6 +610,7 @@
   letter-spacing: 0.02em;
   white-space: nowrap;
   border: 1px solid transparent;
+  flex-shrink: 0;
 }
 
 .card-tag-abv {

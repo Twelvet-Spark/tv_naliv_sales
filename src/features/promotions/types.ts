@@ -1,3 +1,5 @@
+export type PromotionSourceKind = 'promotion' | 'catalog'
+
 export type PromotionDetail = {
   detail_id: number
   item_id: number | null
@@ -14,6 +16,7 @@ export type PromotionDetail = {
 
 export type Promotion = {
   marketing_promotion_id: number
+  sourceKind: PromotionSourceKind
   name: string
   internal_name: string
   cover: string | null

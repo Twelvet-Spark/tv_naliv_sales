@@ -179,7 +179,7 @@ export function describeDetail(detail: PromotionDetail) {
     return `-${wholeNumberFormatter.format(detail.discount)} ₸`
   }
 
-  return detail.name || 'Спецусловие'
+  return detail.name.trim()
 }
 
 export function formatPrice(value: number | null) {

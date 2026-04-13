@@ -10,6 +10,17 @@ type PromotionsPayload = {
   count: number
 }
 
+type PromotionItemEntry = {
+  detailId: number
+  itemId: number | null
+  itemName: string
+  itemImg: string | null
+  itemCode: string | null
+  price: number | null
+  hasPromotionDetails: boolean
+  details: PromotionDetail[]
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
@@ -120,6 +131,7 @@ function parsePromotion(raw: unknown, index: number): Promotion | null {
 
   return {
     marketing_promotion_id: id,
+    sourceKind: 'promotion',
     name: asString(raw.name, `Акция ${index + 1}`),
     internal_name: asString(raw.internal_name),
     cover: asNullableString(raw.cover),
@@ -141,46 +153,87 @@ function buildFallbackDetailFromItem(raw: Record<string, unknown>): PromotionDet
     item_code: asNullableString(raw.item_code),
     price: asNumber(raw.price),
     type: 'UNKNOWN',
-    name: 'Спецусловие',
+    name: '',
     discount: asNumber(raw.discount),
     base_amount: asNumber(raw.base_amount),
     add_amount: asNumber(raw.add_amount),
   }
 }
 
+function parsePromotionItemEntry(raw: unknown, index: number): PromotionItemEntry | null {
+  if (!isRecord(raw)) return null
+
+  const detailId = asNumber(raw.detail_id) ?? asNumber(raw.item_id)
+  if (detailId === null) return null
+
+  const rawDetails = Array.isArray(raw.details) ? raw.details : []
+  const parsedDetails = rawDetails
+    .map((detail, detailIndex) => parsePromotionDetail(detail, detailIndex))
+    .filter((detail): detail is PromotionDetail => detail !== null)
+
+  const details = parsedDetails.length > 0
+    ? parsedDetails
+    : (() => {
+        const fallbackDetail = buildFallbackDetailFromItem(raw)
+        return fallbackDetail ? [fallbackDetail] : []
+      })()
+
+  if (details.length === 0) return null
+
+  return {
+    detailId,
+    itemId: asNumber(raw.item_id),
+    itemName: asString(raw.item_name, `Позиция ${index + 1}`),
+    itemImg: compactString(raw.item_img),
+    itemCode: compactString(raw.item_code),
+    price: asNumber(raw.price),
+    hasPromotionDetails: parsedDetails.length > 0,
+    details,
+  }
+}
+
 function parseFallbackPromotionList(rawItems: unknown[], businessId: number | null, businessName: string | null): Promotion[] {
-  const details = rawItems.flatMap((item) => {
-    if (!isRecord(item)) return []
+  const parsedItems = rawItems
+    .map((item, index) => parsePromotionItemEntry(item, index))
+    .filter((item): item is PromotionItemEntry => item !== null)
 
-    const rawDetails = Array.isArray(item.details) ? item.details : []
-    const parsedDetails = rawDetails
-      .map((detail, detailIndex) => parsePromotionDetail(detail, detailIndex))
-      .filter((detail): detail is PromotionDetail => detail !== null)
+  const promotionItems = parsedItems.filter((item) => item.hasPromotionDetails)
+  const catalogItems = parsedItems.filter((item) => !item.hasPromotionDetails)
+  const fallbackPromotions: Promotion[] = []
 
-    if (parsedDetails.length > 0) {
-      return parsedDetails
-    }
+  if (promotionItems.length > 0) {
+    const firstPromotionItem = promotionItems[0]
+    const promotionName = businessName ? `Промо ${businessName}` : 'Промо позиции'
 
-    const fallbackDetail = buildFallbackDetailFromItem(item)
-    return fallbackDetail ? [fallbackDetail] : []
-  })
-
-  if (details.length === 0) return []
-
-  const firstItem = rawItems.find(isRecord) ?? null
-  const fallbackName = businessName ? `Акции ${businessName}` : 'Акционные позиции'
-
-  return [
-    {
-      marketing_promotion_id: businessId ?? (firstItem ? asNumber(firstItem.item_id) ?? asNumber(firstItem.detail_id) ?? 1 : 1),
-      name: fallbackName,
-      internal_name: fallbackName,
-      cover: firstItem ? compactString(firstItem.item_img) : null,
+    fallbackPromotions.push({
+      marketing_promotion_id: (businessId ?? firstPromotionItem.itemId ?? firstPromotionItem.detailId ?? 1) * 10 + 1,
+      sourceKind: 'promotion',
+      name: promotionName,
+      internal_name: promotionName,
+      cover: firstPromotionItem.itemImg ?? null,
       start_promotion_date: '',
       end_promotion_date: '',
-      details,
-    },
-  ]
+      details: promotionItems.flatMap((item) => item.details),
+    })
+  }
+
+  if (catalogItems.length > 0) {
+    const firstCatalogItem = catalogItems[0]
+    const catalogName = businessName ? `Позиции ${businessName}` : 'Позиции категории'
+
+    fallbackPromotions.push({
+      marketing_promotion_id: (businessId ?? firstCatalogItem.itemId ?? firstCatalogItem.detailId ?? 1) * 10 + 2,
+      sourceKind: 'catalog',
+      name: catalogName,
+      internal_name: catalogName,
+      cover: firstCatalogItem.itemImg ?? null,
+      start_promotion_date: '',
+      end_promotion_date: '',
+      details: catalogItems.flatMap((item) => item.details),
+    })
+  }
+
+  return fallbackPromotions
 }
 
 function parsePayload(raw: unknown): PromotionsPayload {
@@ -193,7 +246,7 @@ function parsePayload(raw: unknown): PromotionsPayload {
     throw new Error(message)
   }
 
-  const data = isRecord(raw.data) ? raw.data : {}
+  const data = isRecord(raw.data) ? raw.data : Array.isArray(raw.data) ? { items: raw.data } : {}
   const business = isRecord(data.business) ? data.business : null
   const businessId = business ? asNumber(business.business_id) : null
   const businessName = business && typeof business.name === 'string' ? business.name : null
@@ -204,7 +257,7 @@ function parsePayload(raw: unknown): PromotionsPayload {
     .map((promotion, index) => parsePromotion(promotion, index))
     .filter((promotion): promotion is Promotion => promotion !== null)
 
-  const rawItems = Array.isArray(data.items) ? data.items : []
+  const rawItems = Array.isArray(data.items) ? data.items : Array.isArray(raw) ? raw : []
   const fallbackPromotions = parseFallbackPromotionList(rawItems, businessId, businessName)
 
   const promotions = parsedPromotions.length > 0 ? parsedPromotions : fallbackPromotions
