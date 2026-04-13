@@ -10,6 +10,8 @@ type RuntimeContext = {
   businessAddress: string | null
   source: 'live' | 'cache' | null
   promotionsCount: number | null
+  tvWallScreenCount: number | null
+  tvWallScreenIndex: number | null
 }
 
 import { captureMonitoringEvent, captureMonitoringException, setMonitoringContext } from './monitoring.ts'
@@ -41,6 +43,8 @@ const runtimeContext: RuntimeContext = {
   businessAddress: null,
   source: null,
   promotionsCount: null,
+  tvWallScreenCount: null,
+  tvWallScreenIndex: null,
 }
 
 function shouldLog(level: LogLevel) {

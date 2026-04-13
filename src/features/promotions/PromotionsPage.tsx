@@ -9,6 +9,7 @@ import { getKzDayPeriod, resolveKzHour, type DebugMessageMode } from '../theme/k
 import { useKzGreeting } from '../theme/useKzGreeting'
 import { CLIENT_MESSAGE_ROTATION_INTERVAL_MS, DETAIL_ROTATION_INTERVAL_MS, PAGE_ROTATION_INTERVAL_MS, PROGRESS_TICK_INTERVAL_MS } from './constants'
 import { computeNewPrice, describeDetail, formatDate, formatPrice, formatStaleAge } from './format'
+import type { PromotionDetail } from './types'
 import { isInvalidTokenMessage, usePromotions } from './usePromotions'
 
 const GENERAL_MESSAGES = [
@@ -86,6 +87,49 @@ const MESSAGE_ANIMATION_CLASSES = [
   'promo-message-anim-sweep',
 ] as const
 
+const WALL_SYNC_EPOCH_MS = Date.UTC(2025, 0, 1)
+
+type PromotionWallPage = {
+  promotionIndex: number
+  wallPageIndex: number
+  wallPageCount: number
+  pageDetails: PromotionDetail[]
+}
+
+function buildPromotionWallPages(data: ReturnType<typeof usePromotions>['data'], rowsPerPage: number, screenCount: number) {
+  const safeScreenCount = Math.max(1, screenCount)
+  const pageCapacity = Math.max(1, rowsPerPage * safeScreenCount)
+
+  return data.flatMap<PromotionWallPage>((promotion, promotionIndex) => {
+    const wallPageCount = Math.max(1, Math.ceil(promotion.details.length / pageCapacity))
+
+    return Array.from({ length: wallPageCount }, (_, wallPageIndex) => {
+      const start = wallPageIndex * pageCapacity
+      return {
+        promotionIndex,
+        wallPageIndex,
+        wallPageCount,
+        pageDetails: promotion.details.slice(start, start + pageCapacity),
+      }
+    })
+  })
+}
+
+function splitDetailsForScreen(details: PromotionDetail[], screenCount: number, screenIndex: number) {
+  const safeScreenCount = Math.max(1, screenCount)
+  const safeScreenIndex = Math.max(0, Math.min(safeScreenCount - 1, screenIndex))
+  const baseCount = Math.floor(details.length / safeScreenCount)
+  const extra = details.length % safeScreenCount
+
+  let start = 0
+  for (let index = 0; index < safeScreenIndex; index += 1) {
+    start += baseCount + (index < extra ? 1 : 0)
+  }
+
+  const count = baseCount + (safeScreenIndex < extra ? 1 : 0)
+  return details.slice(start, start + count)
+}
+
 function resolveCurrentPageState(pageDurationsMs: number[], elapsedCycleMs: number) {
   if (pageDurationsMs.length === 0) {
     return {
@@ -116,8 +160,20 @@ function resolveCurrentPageState(pageDurationsMs: number[], elapsedCycleMs: numb
   }
 }
 
+function sumVisiblePageCountsBefore(counts: number[], endIndexExclusive: number) {
+  let total = 0
+
+  for (let index = 0; index < endIndexExclusive; index += 1) {
+    total += counts[index] ?? 0
+  }
+
+  return total
+}
+
 type Props = {
   token: string
+  wallScreenCount?: number
+  wallScreenIndex?: number
   debugHour?: number | null
   debugMessageMode?: DebugMessageMode
   debugRotationPaused?: boolean
@@ -129,6 +185,8 @@ type Props = {
 
 export default function PromotionsPage({
   token,
+  wallScreenCount = 1,
+  wallScreenIndex = 0,
   debugHour = null,
   debugMessageMode = 'auto',
   debugRotationPaused = false,
@@ -152,7 +210,11 @@ export default function PromotionsPage({
   const rowsPerPage = useRowsPerPage()
   const greeting = useKzGreeting(debugHour)
   const dayPeriod = useMemo(() => getKzDayPeriod(resolveKzHour(debugHour)), [debugHour])
-  const isRotationPaused = debugRotationPaused || isAutoPaused
+  const normalizedWallScreenCount = Math.max(1, Math.floor(wallScreenCount))
+  const normalizedWallScreenIndex = Math.max(0, Math.floor(wallScreenIndex))
+  const actualWallScreenIndex = normalizedWallScreenCount > 0 ? normalizedWallScreenIndex % normalizedWallScreenCount : 0
+  const isWallSyncRequested = normalizedWallScreenCount > 1
+  const isRotationPaused = debugRotationPaused || (isAutoPaused && !isWallSyncRequested)
   const staleAgeLabel = useMemo(() => {
     if (!staleSince) return null
     return formatStaleAge(staleSince)
@@ -309,6 +371,16 @@ export default function PromotionsPage({
     () => data.map((promotion) => Math.max(PAGE_ROTATION_INTERVAL_MS, Math.ceil(promotion.details.length / rowsPerPage) * DETAIL_ROTATION_INTERVAL_MS)),
     [data, rowsPerPage],
   )
+  const localVisiblePageCounts = useMemo(
+    () => data.map((promotion) => Math.max(1, Math.ceil(promotion.details.length / rowsPerPage))),
+    [data, rowsPerPage],
+  )
+  const localVisiblePageTotal = useMemo(
+    () => localVisiblePageCounts.reduce((total, count) => total + count, 0),
+    [localVisiblePageCounts],
+  )
+  const wallPages = useMemo(() => buildPromotionWallPages(data, rowsPerPage, normalizedWallScreenCount), [data, normalizedWallScreenCount, rowsPerPage])
+  const isWallSyncEnabled = isWallSyncRequested && wallPages.length > 0
   const rotationCycleDurationMs = useMemo(
     () => pageDurationsMs.reduce((total, duration) => total + duration, 0),
     [pageDurationsMs],
@@ -341,11 +413,42 @@ export default function PromotionsPage({
   const completedCycles = rotationCycleDurationMs > 0 ? Math.floor(elapsedPageMs / rotationCycleDurationMs) : 0
   const pageStartMs = rotationAnchorMs + completedCycles * rotationCycleDurationMs + currentPageOffsetMs
   const detailPageElapsedMs = detailPageCount > 1 ? Math.max(0, effectiveNowMs - pageStartMs) % DETAIL_ROTATION_INTERVAL_MS : 0
-  const elapsedMessageMs = Math.max(0, effectiveNowMs - messageAnchorMs)
+  const currentLocalDetailPageIndex = detailPageCount > 1 ? Math.floor(Math.max(0, effectiveNowMs - pageStartMs) / DETAIL_ROTATION_INTERVAL_MS) % detailPageCount : 0
+  const wallElapsedMs = Math.max(0, effectiveNowMs - WALL_SYNC_EPOCH_MS)
+  const wallSlotElapsedMs = wallElapsedMs % DETAIL_ROTATION_INTERVAL_MS
+  const wallPageCursor = wallPages.length > 0 ? Math.floor(wallElapsedMs / DETAIL_ROTATION_INTERVAL_MS) % wallPages.length : 0
+  const activeWallPage = wallPages[wallPageCursor] ?? null
+  const syncedPromotion = activeWallPage ? data[activeWallPage.promotionIndex] ?? null : null
+  const syncedPageStartMs = effectiveNowMs - wallSlotElapsedMs
+  const syncedVisibleDetails = activeWallPage ? splitDetailsForScreen(activeWallPage.pageDetails, normalizedWallScreenCount, actualWallScreenIndex) : null
+  const displayedPromotion = isWallSyncEnabled ? syncedPromotion : currentPromotion
+  const displayedDetailPageCount = isWallSyncEnabled ? activeWallPage?.wallPageCount ?? 1 : detailPageCount
+  const displayedPromoIndex = isWallSyncEnabled ? activeWallPage?.promotionIndex ?? 0 : safePageIndex
+  const displayedRingDurationMs = isWallSyncEnabled ? DETAIL_ROTATION_INTERVAL_MS : detailPageCount > 1 ? DETAIL_ROTATION_INTERVAL_MS : currentPageDurationMs
+  const displayedRingElapsedMs = isWallSyncEnabled ? wallSlotElapsedMs : detailPageCount > 1 ? detailPageElapsedMs : Math.max(0, elapsedCycleMs - currentPageOffsetMs)
+  const displayedPageStartedAtMs = isWallSyncEnabled ? syncedPageStartMs : pageStartMs
+  const forcedDetailPageIndex = isWallSyncEnabled ? activeWallPage?.wallPageIndex ?? 0 : null
+  const elapsedMessageMs = isWallSyncEnabled ? wallElapsedMs : Math.max(0, effectiveNowMs - messageAnchorMs)
   const footerMessageIndex = activeMessages.length > 0 ? Math.floor(elapsedMessageMs / CLIENT_MESSAGE_ROTATION_INTERVAL_MS) % activeMessages.length : 0
   const footerMessageAnimation = MESSAGE_ANIMATION_CLASSES[debugTextAnimationMode ?? (footerMessageIndex % MESSAGE_ANIMATION_CLASSES.length)]
+  const wallLabel = normalizedWallScreenCount > 1 ? `экран ${actualWallScreenIndex + 1}/${normalizedWallScreenCount}` : null
+  const displayProgressTotal = isWallSyncEnabled ? wallPages.length : localVisiblePageTotal
+  const displayProgressIndex = isWallSyncEnabled
+    ? wallPageCursor
+    : sumVisiblePageCountsBefore(localVisiblePageCounts, safePageIndex) + currentLocalDetailPageIndex
+  const showProgressIndicator = displayProgressTotal > 1
 
   useEffect(() => {
+    if (isWallSyncEnabled) {
+      telemetry.info('promotions.wall_sync.active', {
+        wallScreenCount: normalizedWallScreenCount,
+        wallScreenIndex: actualWallScreenIndex + 1,
+        wallPageCount: wallPages.length,
+        screenDetailCount: syncedVisibleDetails?.length ?? 0,
+      })
+      return
+    }
+
     if (!currentPromotion || detailPageCount <= 1) return
 
     telemetry.info('promotions.render.multi_page', {
@@ -354,7 +457,7 @@ export default function PromotionsPage({
       detailPageCount,
       rowsPerPage,
     })
-  }, [currentPromotion, detailPageCount, rowsPerPage])
+  }, [actualWallScreenIndex, currentPromotion, detailPageCount, isWallSyncEnabled, normalizedWallScreenCount, rowsPerPage, syncedVisibleDetails?.length, wallPages.length])
 
   return (
     <Layout hideHeader>
@@ -365,19 +468,24 @@ export default function PromotionsPage({
           {status === 'offline' && <StatusState type="offline" message={error} />}
           {status === 'success' && data.length === 0 && <StatusState type="empty" />}
 
-          {status === 'success' && data.length > 0 && currentPromotion && (
+          {status === 'success' && data.length > 0 && displayedPromotion && (
             <PromoCard
-              key={`${currentPromotion.marketing_promotion_id}-${rowsPerPage}`}
-              promotion={currentPromotion}
+              key={isWallSyncEnabled ? `${displayedPromotion.marketing_promotion_id}-${forcedDetailPageIndex ?? 0}-${actualWallScreenIndex}` : `${displayedPromotion.marketing_promotion_id}-${rowsPerPage}`}
+              promotion={displayedPromotion}
               rowsPerPage={rowsPerPage}
               detailDurationMs={DETAIL_ROTATION_INTERVAL_MS}
-              detailPageCount={detailPageCount}
-              promoIndex={safePageIndex}
+              detailPageCount={displayedDetailPageCount}
+              forcedDetailPageIndex={forcedDetailPageIndex}
+              visibleDetailsOverride={isWallSyncEnabled ? syncedVisibleDetails : null}
+              promoIndex={displayedPromoIndex}
               promoCount={data.length}
-              ringDurationMs={detailPageCount > 1 ? DETAIL_ROTATION_INTERVAL_MS : currentPageDurationMs}
-              ringElapsedMs={detailPageCount > 1 ? detailPageElapsedMs : Math.max(0, elapsedCycleMs - currentPageOffsetMs)}
+              showProgressIndicator={showProgressIndicator}
+              progressIndex={displayProgressIndex}
+              progressTotal={displayProgressTotal}
+              ringDurationMs={displayedRingDurationMs}
+              ringElapsedMs={displayedRingElapsedMs}
               isRotationPaused={isRotationPaused}
-              pageStartedAtMs={pageStartMs}
+              pageStartedAtMs={displayedPageStartedAtMs}
               nowMs={effectiveNowMs}
               describeDetail={describeDetail}
               formatPrice={formatPrice}
@@ -402,6 +510,8 @@ export default function PromotionsPage({
           <div className="tech-overlay" aria-hidden>
             <span className={`tech-dot ${source === 'live' ? 'tech-dot-live' : ''}`} />
             <span>{source === 'live' ? 'онлайн' : 'кэш'}</span>
+            {wallLabel && <span className="tech-divider">·</span>}
+            {wallLabel && <span>{wallLabel}</span>}
             {shopLabel && <span className="tech-divider">·</span>}
             {shopLabel && <span className="tech-location">{shopLabel}</span>}
             {isStale && staleAgeLabel && <span>· {staleAgeLabel}</span>}

@@ -13,6 +13,8 @@ type MonitoringContext = {
   businessAddress: string | null
   source: string | null
   promotionsCount: number | null
+  tvWallScreenCount: number | null
+  tvWallScreenIndex: number | null
 }
 
 const SENTRY_DSN = 'https://96218a1fe3798667625c3b4178251e6d@o4510957798883328.ingest.us.sentry.io/4511213168427008'
@@ -36,6 +38,8 @@ const monitoringContext: MonitoringContext = {
   businessAddress: null,
   source: null,
   promotionsCount: null,
+  tvWallScreenCount: null,
+  tvWallScreenIndex: null,
 }
 
 let monitoringInitialized = false
@@ -101,6 +105,8 @@ function applyScopeContext(scope: Sentry.Scope) {
     businessAddress: monitoringContext.businessAddress,
     source: monitoringContext.source,
     promotionsCount: monitoringContext.promotionsCount,
+    tvWallScreenCount: monitoringContext.tvWallScreenCount,
+    tvWallScreenIndex: monitoringContext.tvWallScreenIndex,
   })
 }
 

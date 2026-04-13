@@ -15,5 +15,6 @@ function toBoolean(value: string | undefined, fallback: boolean) {
 
 export const featureFlags = {
   richUi: toBoolean(import.meta.env.VITE_TV_RICH_UI, true),
-  debugClock: toBoolean(import.meta.env.VITE_TV_DEBUG_CLOCK, import.meta.env.DEV),
+  debugClock: toBoolean(import.meta.env.VITE_TV_DEBUG_CLOCK, false),
+  allowTokenEdit: toBoolean(import.meta.env.VITE_TV_ALLOW_TOKEN_EDIT, import.meta.env.DEV || !import.meta.env.VITE_TV_BUSINESS_TOKEN),
 }

@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Route, Routes, useNavigate } from 'react-router-dom'
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import AdminExitControl from './components/AdminExitControl'
 import AppErrorBoundary from './components/AppErrorBoundary'
 import TimeDebugPanel from './components/TimeDebugPanel'
+import { grantAdminAccess, hasAdminAccess, revokeAdminAccess } from './features/admin/storage'
 import PromotionsPage from './features/promotions/PromotionsPage'
+import { getInitialTvWallConfig, persistTvWallConfig, type TvWallConfig } from './features/display/storage'
 import { getKzThemePalette, resolveKzHour, type DebugMessageMode } from './features/theme/kzTime'
 import { useKzThemeMode } from './features/theme/useKzThemeMode'
 import TokenPage from './features/token/TokenPage'
@@ -30,7 +33,9 @@ function getInitialDebugHour() {
 function App() {
   const envToken = import.meta.env.VITE_TV_BUSINESS_TOKEN ?? ''
   const [token, setToken] = useState(() => getInitialToken(envToken))
-  const [debugHour, setDebugHour] = useState<number | null>(() => getInitialDebugHour())
+  const [wallConfig, setWallConfig] = useState<TvWallConfig>(() => getInitialTvWallConfig())
+  const [adminAccessGranted, setAdminAccessGranted] = useState(() => hasAdminAccess())
+  const [debugHour, setDebugHour] = useState<number | null>(() => featureFlags.debugClock ? getInitialDebugHour() : null)
   const [debugMessageMode, setDebugMessageMode] = useState<DebugMessageMode>('auto')
   const [debugRotationPaused, setDebugRotationPaused] = useState(false)
   const [debugTextAnimationMode, setDebugTextAnimationMode] = useState<number | null>(null)
@@ -85,19 +90,31 @@ function App() {
   }, [debugHour])
 
   useEffect(() => {
+    if (typeof window === 'undefined' || featureFlags.debugClock) return
+
+    window.localStorage.removeItem(DEBUG_HOUR_STORAGE_KEY)
+  }, [])
+
+  useEffect(() => {
     telemetry.setContext({
       token: token || null,
       tokenHash: token ? token.slice(0, 6) : null,
+      tvWallScreenCount: wallConfig.screenCount,
+      tvWallScreenIndex: wallConfig.screenIndex + 1,
     })
-  }, [token])
+  }, [token, wallConfig.screenCount, wallConfig.screenIndex])
 
-  const handleSaveToken = (next: string) => {
+  const handleSaveSetup = (next: string, nextWallConfig: TvWallConfig) => {
     setToken(next)
     persistToken(next)
+    setWallConfig(nextWallConfig)
+    persistTvWallConfig(nextWallConfig)
+    revokeAdminAccess()
+    setAdminAccessGranted(false)
   }
 
   const handleInvalidToken = () => {
-    handleSaveToken('')
+    handleSaveSetup('', wallConfig)
     navigate('/token')
   }
 
@@ -109,17 +126,46 @@ function App() {
     setDebugMessageShift((prev) => prev + 1)
   }
 
+  const openSettings = () => {
+    grantAdminAccess()
+    setAdminAccessGranted(true)
+    telemetry.info('admin.settings.opened', {
+      source: 'hold_to_exit',
+    })
+    navigate('/token')
+  }
+
+  const canEditToken = featureFlags.allowTokenEdit || !token || adminAccessGranted
+  const promotionsElement = token ? (
+    <PromotionsPage
+      key={token}
+      token={token}
+      wallScreenCount={wallConfig.screenCount}
+      wallScreenIndex={wallConfig.screenIndex}
+      debugHour={debugHour}
+      debugMessageMode={debugMessageMode}
+      debugRotationPaused={debugRotationPaused}
+      debugTextAnimationMode={debugTextAnimationMode}
+      debugPageShift={debugPageShift}
+      debugMessageShift={debugMessageShift}
+      onInvalidToken={handleInvalidToken}
+    />
+  ) : (
+    <TokenPage token={token} wallConfig={wallConfig} onSave={handleSaveSetup} />
+  )
+
   return (
     <div className={`app-shell theme-${themeMode}`}>
       <div className="app-ambient app-ambient-a" aria-hidden />
       <div className="app-ambient app-ambient-b" aria-hidden />
       <AppErrorBoundary>
         <Routes>
-          <Route path="/token" element={<TokenPage token={token} onSave={handleSaveToken} />} />
-          <Route path="/" element={token ? <PromotionsPage key={token} token={token} debugHour={debugHour} debugMessageMode={debugMessageMode} debugRotationPaused={debugRotationPaused} debugTextAnimationMode={debugTextAnimationMode} debugPageShift={debugPageShift} debugMessageShift={debugMessageShift} onInvalidToken={handleInvalidToken} /> : <TokenPage token={token} onSave={handleSaveToken} />} />
-          <Route path="*" element={token ? <PromotionsPage key={token} token={token} debugHour={debugHour} debugMessageMode={debugMessageMode} debugRotationPaused={debugRotationPaused} debugTextAnimationMode={debugTextAnimationMode} debugPageShift={debugPageShift} debugMessageShift={debugMessageShift} onInvalidToken={handleInvalidToken} /> : <TokenPage token={token} onSave={handleSaveToken} />} />
+          <Route path="/token" element={canEditToken ? <TokenPage token={token} wallConfig={wallConfig} onSave={handleSaveSetup} /> : <Navigate to="/" replace />} />
+          <Route path="/" element={promotionsElement} />
+          <Route path="*" element={promotionsElement} />
         </Routes>
       </AppErrorBoundary>
+      {token && <AdminExitControl onOpenSettings={openSettings} />}
       {featureFlags.debugClock && (
         <TimeDebugPanel
           value={debugHour}
