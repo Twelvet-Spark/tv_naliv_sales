@@ -3,6 +3,7 @@ export type KzThemeMode = 'day' | 'night'
 export type KzDayPeriod = 'night' | 'dawn' | 'morning' | 'day' | 'evening'
 
 export type DebugMessageMode = 'auto' | 'general' | KzDayPeriod
+export type PanelColorMode = 'high' | 'low'
 
 export type KzThemePalette = {
   bgBase: string
@@ -39,6 +40,169 @@ type PaletteStop = {
   mode: KzThemeMode
   palette: KzThemePalette
 }
+
+const HIGH_CONTRAST_PALETTE_STOPS: PaletteStop[] = [
+  {
+    hour: 0,
+    mode: 'night',
+    palette: {
+      bgBase: '#090d12',
+      bgTop: '#141b25',
+      bgBottom: '#05070a',
+      accent: '#ff9f4a',
+      accentSoft: 'rgba(255, 159, 74, 0.14)',
+      surface: 'rgba(255, 255, 255, 0.05)',
+      surfaceStrong: 'rgba(255, 255, 255, 0.09)',
+      line: 'rgba(255, 255, 255, 0.2)',
+      textStrong: '#fffaf5',
+      textMain: 'rgba(255, 250, 245, 0.99)',
+      textSoft: 'rgba(255, 250, 245, 0.88)',
+      textMuted: 'rgba(255, 250, 245, 0.72)',
+      ambientPrimary: 'rgba(255, 169, 82, 0.03)',
+      ambientSecondary: 'rgba(95, 118, 150, 0.02)',
+    },
+  },
+  {
+    hour: 5,
+    mode: 'night',
+    palette: {
+      bgBase: '#11151c',
+      bgTop: '#263140',
+      bgBottom: '#090c11',
+      accent: '#ffb661',
+      accentSoft: 'rgba(255, 182, 97, 0.14)',
+      surface: 'rgba(255, 255, 255, 0.052)',
+      surfaceStrong: 'rgba(255, 255, 255, 0.092)',
+      line: 'rgba(255, 255, 255, 0.2)',
+      textStrong: '#fffaf5',
+      textMain: 'rgba(255, 250, 245, 0.99)',
+      textSoft: 'rgba(255, 250, 245, 0.89)',
+      textMuted: 'rgba(255, 250, 245, 0.73)',
+      ambientPrimary: 'rgba(255, 182, 97, 0.032)',
+      ambientSecondary: 'rgba(114, 136, 166, 0.022)',
+    },
+  },
+  {
+    hour: 7,
+    mode: 'day',
+    palette: {
+      bgBase: '#131a22',
+      bgTop: '#31465c',
+      bgBottom: '#0a1016',
+      accent: '#ffbd67',
+      accentSoft: 'rgba(255, 189, 103, 0.14)',
+      surface: 'rgba(255, 255, 255, 0.054)',
+      surfaceStrong: 'rgba(255, 255, 255, 0.096)',
+      line: 'rgba(255, 255, 255, 0.205)',
+      textStrong: '#fffbf6',
+      textMain: 'rgba(255, 251, 246, 0.99)',
+      textSoft: 'rgba(255, 251, 246, 0.89)',
+      textMuted: 'rgba(255, 251, 246, 0.74)',
+      ambientPrimary: 'rgba(255, 189, 103, 0.03)',
+      ambientSecondary: 'rgba(112, 148, 186, 0.024)',
+    },
+  },
+  {
+    hour: 10,
+    mode: 'day',
+    palette: {
+      bgBase: '#15202a',
+      bgTop: '#3b556d',
+      bgBottom: '#0b1218',
+      accent: '#ffb45c',
+      accentSoft: 'rgba(255, 180, 92, 0.14)',
+      surface: 'rgba(255, 255, 255, 0.056)',
+      surfaceStrong: 'rgba(255, 255, 255, 0.1)',
+      line: 'rgba(255, 255, 255, 0.21)',
+      textStrong: '#fffaf5',
+      textMain: 'rgba(255, 250, 245, 0.99)',
+      textSoft: 'rgba(255, 250, 245, 0.89)',
+      textMuted: 'rgba(255, 250, 245, 0.74)',
+      ambientPrimary: 'rgba(255, 180, 92, 0.03)',
+      ambientSecondary: 'rgba(108, 144, 178, 0.024)',
+    },
+  },
+  {
+    hour: 14,
+    mode: 'day',
+    palette: {
+      bgBase: '#161d26',
+      bgTop: '#43566b',
+      bgBottom: '#0b1016',
+      accent: '#ffae54',
+      accentSoft: 'rgba(255, 174, 84, 0.14)',
+      surface: 'rgba(255, 255, 255, 0.056)',
+      surfaceStrong: 'rgba(255, 255, 255, 0.1)',
+      line: 'rgba(255, 255, 255, 0.21)',
+      textStrong: '#fff9f3',
+      textMain: 'rgba(255, 249, 243, 0.99)',
+      textSoft: 'rgba(255, 249, 243, 0.885)',
+      textMuted: 'rgba(255, 249, 243, 0.73)',
+      ambientPrimary: 'rgba(255, 174, 84, 0.03)',
+      ambientSecondary: 'rgba(96, 130, 164, 0.022)',
+    },
+  },
+  {
+    hour: 18,
+    mode: 'day',
+    palette: {
+      bgBase: '#18151b',
+      bgTop: '#523830',
+      bgBottom: '#0b0b10',
+      accent: '#ffa760',
+      accentSoft: 'rgba(255, 167, 96, 0.14)',
+      surface: 'rgba(255, 255, 255, 0.055)',
+      surfaceStrong: 'rgba(255, 255, 255, 0.098)',
+      line: 'rgba(255, 255, 255, 0.205)',
+      textStrong: '#fff8f2',
+      textMain: 'rgba(255, 248, 242, 0.99)',
+      textSoft: 'rgba(255, 248, 242, 0.885)',
+      textMuted: 'rgba(255, 248, 242, 0.72)',
+      ambientPrimary: 'rgba(255, 167, 96, 0.032)',
+      ambientSecondary: 'rgba(136, 92, 124, 0.022)',
+    },
+  },
+  {
+    hour: 21,
+    mode: 'night',
+    palette: {
+      bgBase: '#0d1016',
+      bgTop: '#1e2431',
+      bgBottom: '#06080c',
+      accent: '#ff9f4d',
+      accentSoft: 'rgba(255, 159, 77, 0.14)',
+      surface: 'rgba(255, 255, 255, 0.052)',
+      surfaceStrong: 'rgba(255, 255, 255, 0.094)',
+      line: 'rgba(255, 255, 255, 0.2)',
+      textStrong: '#fffaf5',
+      textMain: 'rgba(255, 250, 245, 0.99)',
+      textSoft: 'rgba(255, 250, 245, 0.88)',
+      textMuted: 'rgba(255, 250, 245, 0.72)',
+      ambientPrimary: 'rgba(255, 159, 77, 0.03)',
+      ambientSecondary: 'rgba(98, 118, 156, 0.02)',
+    },
+  },
+  {
+    hour: 24,
+    mode: 'night',
+    palette: {
+      bgBase: '#090d12',
+      bgTop: '#141b25',
+      bgBottom: '#05070a',
+      accent: '#ff9f4a',
+      accentSoft: 'rgba(255, 159, 74, 0.14)',
+      surface: 'rgba(255, 255, 255, 0.05)',
+      surfaceStrong: 'rgba(255, 255, 255, 0.09)',
+      line: 'rgba(255, 255, 255, 0.2)',
+      textStrong: '#fffaf5',
+      textMain: 'rgba(255, 250, 245, 0.99)',
+      textSoft: 'rgba(255, 250, 245, 0.88)',
+      textMuted: 'rgba(255, 250, 245, 0.72)',
+      ambientPrimary: 'rgba(255, 169, 82, 0.03)',
+      ambientSecondary: 'rgba(95, 118, 150, 0.02)',
+    },
+  },
+] 
 
 const PALETTE_STOPS: PaletteStop[] = [
   {
@@ -264,13 +428,32 @@ function mixColor(from: string, to: string, ratio: number) {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`
 }
 
-function resolvePaletteStops(hour: number) {
-  const safeHour = clampHour(hour)
-  const lastStop = PALETTE_STOPS[PALETTE_STOPS.length - 1]
+function createLowContrastPalette(base: KzThemePalette): KzThemePalette {
+  return {
+    bgBase: mixColor('#141922', base.bgBase, 0.08),
+    bgTop: mixColor('#202a37', base.bgTop, 0.11),
+    bgBottom: mixColor('#0b1017', base.bgBottom, 0.06),
+    accent: mixColor('#ff9d48', base.accent, 0.1),
+    accentSoft: 'rgba(255, 157, 72, 0.14)',
+    surface: 'rgba(255, 255, 255, 0.065)',
+    surfaceStrong: 'rgba(255, 255, 255, 0.11)',
+    line: 'rgba(255, 255, 255, 0.17)',
+    textStrong: '#fff7ef',
+    textMain: 'rgba(255, 247, 239, 0.97)',
+    textSoft: 'rgba(255, 247, 239, 0.84)',
+    textMuted: 'rgba(255, 247, 239, 0.62)',
+    ambientPrimary: mixColor('rgba(255, 157, 72, 0.05)', base.ambientPrimary, 0.08),
+    ambientSecondary: mixColor('rgba(78, 102, 132, 0.04)', base.ambientSecondary, 0.06),
+  }
+}
 
-  for (let index = 0; index < PALETTE_STOPS.length - 1; index += 1) {
-    const current = PALETTE_STOPS[index]
-    const next = PALETTE_STOPS[index + 1]
+function resolvePaletteStops(hour: number, paletteStops: PaletteStop[]) {
+  const safeHour = clampHour(hour)
+  const lastStop = paletteStops[paletteStops.length - 1]
+
+  for (let index = 0; index < paletteStops.length - 1; index += 1) {
+    const current = paletteStops[index]
+    const next = paletteStops[index + 1]
 
     if (safeHour >= current.hour && safeHour <= next.hour) {
       return { current, next }
@@ -280,10 +463,11 @@ function resolvePaletteStops(hour: number) {
   return { current: lastStop, next: lastStop }
 }
 
-export function getKzThemePalette(hour: number): KzThemePalette {
-  const { current, next } = resolvePaletteStops(hour)
+function interpolatePalette(hour: number, paletteStops: PaletteStop[]): KzThemePalette {
+  const { current, next } = resolvePaletteStops(hour, paletteStops)
+  const safeHour = clampHour(hour)
   const span = Math.max(1, next.hour - current.hour)
-  const ratio = clampHour(hour) === current.hour ? 0 : (clampHour(hour) - current.hour) / span
+  const ratio = safeHour === current.hour ? 0 : (safeHour - current.hour) / span
 
   return {
     bgBase: mixColor(current.palette.bgBase, next.palette.bgBase, ratio),
@@ -303,14 +487,27 @@ export function getKzThemePalette(hour: number): KzThemePalette {
   }
 }
 
+export function getKzThemePalette(hour: number, mode: PanelColorMode = 'high'): KzThemePalette {
+  if (mode === 'high') {
+    return interpolatePalette(hour, HIGH_CONTRAST_PALETTE_STOPS)
+  }
+
+  return createLowContrastPalette(interpolatePalette(hour, PALETTE_STOPS))
+}
+
 export function getKzHour(now = new Date()) {
   const parts = new Intl.DateTimeFormat('en-GB', {
     hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
     hour12: false,
     timeZone: KZ_TIME_ZONE,
   }).formatToParts(now)
   const hourPart = parts.find((part) => part.type === 'hour')?.value
-  return Number(hourPart ?? '0')
+  const minutePart = parts.find((part) => part.type === 'minute')?.value
+  const secondPart = parts.find((part) => part.type === 'second')?.value
+
+  return Number(hourPart ?? '0') + Number(minutePart ?? '0') / 60 + Number(secondPart ?? '0') / 3600
 }
 
 export function resolveKzHour(debugHour: number | null, now = new Date()) {

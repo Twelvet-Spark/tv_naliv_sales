@@ -12,7 +12,7 @@ export function useRowsPerPage(uiScalePercent = 100, safeAreaPx = 0) {
   useEffect(() => {
     const compute = () => {
       if (typeof window === 'undefined') return
-      const scaleFactor = Math.max(0.7, uiScalePercent / 100)
+      const scaleFactor = Math.max(0.5, uiScalePercent / 100)
       const width = window.innerWidth
       const height = window.innerHeight
       const isLowResTv = width <= 1024 && height <= 600

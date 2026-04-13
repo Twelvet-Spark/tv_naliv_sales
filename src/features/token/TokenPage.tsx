@@ -2,12 +2,13 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import TokenScreen from '../../components/TokenScreen'
-import type { TvWallConfig } from '../display/storage'
+import type { PanelColorMode, TvWallConfig } from '../display/storage'
 import {
   MAX_SAFE_AREA_PX,
   MAX_UI_SCALE_PERCENT,
   MIN_SAFE_AREA_PX,
   MIN_UI_SCALE_PERCENT,
+  PANEL_COLOR_MODES,
   normalizeTvWallConfig,
 } from '../display/storage'
 
@@ -15,14 +16,16 @@ type Props = {
   token: string
   wallConfig: TvWallConfig
   onSave: (value: string, wallConfig: TvWallConfig) => void
+  onPreviewPanelColorModeChange?: (value: PanelColorMode | null) => void
 }
 
-export default function TokenPage({ token, wallConfig, onSave }: Props) {
+export default function TokenPage({ token, wallConfig, onSave, onPreviewPanelColorModeChange }: Props) {
   const [value, setValue] = useState(token)
   const [screenCountValue, setScreenCountValue] = useState(String(wallConfig.screenCount))
   const [screenNumberValue, setScreenNumberValue] = useState(String(wallConfig.screenIndex + 1))
   const [uiScaleValue, setUiScaleValue] = useState(String(wallConfig.uiScalePercent))
   const [safeAreaValue, setSafeAreaValue] = useState(String(wallConfig.safeAreaPx))
+  const [panelColorModeValue, setPanelColorModeValue] = useState(wallConfig.panelColorMode)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const isInitialSetup = token.trim().length === 0
@@ -36,7 +39,14 @@ export default function TokenPage({ token, wallConfig, onSave }: Props) {
     setScreenNumberValue(String(wallConfig.screenIndex + 1))
     setUiScaleValue(String(wallConfig.uiScalePercent))
     setSafeAreaValue(String(wallConfig.safeAreaPx))
+    setPanelColorModeValue(wallConfig.panelColorMode)
   }, [wallConfig])
+
+  useEffect(() => {
+    onPreviewPanelColorModeChange?.(panelColorModeValue)
+
+    return () => onPreviewPanelColorModeChange?.(null)
+  }, [onPreviewPanelColorModeChange, panelColorModeValue])
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -45,6 +55,7 @@ export default function TokenPage({ token, wallConfig, onSave }: Props) {
     const screenNumber = Number(screenNumberValue)
     const uiScalePercent = Number(uiScaleValue)
     const safeAreaPx = Number(safeAreaValue)
+    const panelColorMode = panelColorModeValue
 
     if (!next) {
       setError('Введите бизнес-токен, чтобы загрузить Акции на экран.')
@@ -71,11 +82,17 @@ export default function TokenPage({ token, wallConfig, onSave }: Props) {
       return
     }
 
+    if (!PANEL_COLOR_MODES.includes(panelColorMode)) {
+      setError('Выберите корректный режим контраста.')
+      return
+    }
+
     const nextWallConfig = normalizeTvWallConfig({
       screenCount,
       screenIndex: screenNumber - 1,
       uiScalePercent,
       safeAreaPx,
+      panelColorMode,
     })
 
     setError(null)
@@ -97,6 +114,8 @@ export default function TokenPage({ token, wallConfig, onSave }: Props) {
         onUiScaleChange={setUiScaleValue}
         safeAreaValue={safeAreaValue}
         onSafeAreaChange={setSafeAreaValue}
+        panelColorModeValue={panelColorModeValue}
+        onPanelColorModeChange={setPanelColorModeValue}
         onSubmit={handleSubmit}
         validationMessage={error}
       />

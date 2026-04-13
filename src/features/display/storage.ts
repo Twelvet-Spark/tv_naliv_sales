@@ -1,17 +1,21 @@
+export type PanelColorMode = 'high' | 'low'
+
 export type TvWallConfig = {
   screenCount: number
   screenIndex: number
   uiScalePercent: number
   safeAreaPx: number
+  panelColorMode: PanelColorMode
 }
 
 const STORAGE_KEY = 'tv_wall_config'
 const MIN_SCREEN_COUNT = 1
 const MAX_SCREEN_COUNT = 12
 export const MIN_UI_SCALE_PERCENT = 50
-export const MAX_UI_SCALE_PERCENT = 120
+export const MAX_UI_SCALE_PERCENT = 150
 export const MIN_SAFE_AREA_PX = 0
 export const MAX_SAFE_AREA_PX = 64
+export const PANEL_COLOR_MODES: PanelColorMode[] = ['high', 'low']
 
 function normalizeScreenCount(value: number | null | undefined) {
   if (!Number.isInteger(value)) return 1
@@ -33,17 +37,24 @@ function normalizeSafeAreaPx(value: number | null | undefined) {
   return Math.max(MIN_SAFE_AREA_PX, Math.min(MAX_SAFE_AREA_PX, Math.round(value ?? 0)))
 }
 
+function normalizePanelColorMode(value: string | null | undefined): PanelColorMode {
+  if (value === 'low' || value === 'normal') return 'low'
+  return 'high'
+}
+
 export function normalizeTvWallConfig(value?: Partial<TvWallConfig> | null): TvWallConfig {
   const screenCount = normalizeScreenCount(value?.screenCount)
   const screenIndex = normalizeScreenIndex(value?.screenIndex, screenCount)
   const uiScalePercent = normalizeUiScalePercent(value?.uiScalePercent)
   const safeAreaPx = normalizeSafeAreaPx(value?.safeAreaPx)
+  const panelColorMode = normalizePanelColorMode(value?.panelColorMode)
 
   return {
     screenCount,
     screenIndex,
     uiScalePercent,
     safeAreaPx,
+    panelColorMode,
   }
 }
 

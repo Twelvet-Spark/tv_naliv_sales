@@ -17,6 +17,15 @@
   --text-muted: rgba(245, 239, 231, 0.36);
   --ambient-primary: rgba(255, 124, 48, 0.24);
   --ambient-secondary: rgba(82, 122, 166, 0.18);
+  --burn-in-bg-primary-duration: 200s;
+  --burn-in-bg-secondary-duration: 240s;
+  --burn-in-content-duration: 260s;
+  --burn-in-overlay-duration: 290s;
+  --burn-in-pattern-opacity: 0.34;
+  --burn-in-secondary-opacity: 0.16;
+  --burn-in-ambient-opacity: 0.14;
+  --burn-in-content-drift-scale: 1;
+  --burn-in-overlay-drift-scale: 1;
   --warning: #f5c542;
   --success: #34c88a;
   --text-on-accent: #fff8f0;
@@ -162,11 +171,103 @@
   animation: ambient-float-d 260s ease-in-out infinite alternate;
 }
 
+:root[data-panel-color-mode='high'] .app-shell::before {
+  background:
+    radial-gradient(52% 44% at 18% 14%, rgba(255, 182, 92, 0.1) 0%, transparent 70%),
+    radial-gradient(38% 34% at 78% 18%, rgba(122, 146, 174, 0.08) 0%, transparent 72%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.026) 0 2px, transparent 2px 18px),
+    repeating-linear-gradient(0deg, rgba(255, 178, 89, 0.02) 0 1px, transparent 1px 26px);
+  opacity: var(--burn-in-pattern-opacity);
+  animation: ambient-float-a var(--burn-in-bg-primary-duration) ease-in-out infinite alternate;
+}
+
+:root[data-panel-color-mode='high'] .app-shell::after {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 26%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 42px),
+    linear-gradient(135deg, rgba(0, 0, 0, 0.1), transparent 36%, rgba(255, 255, 255, 0.03) 100%);
+  opacity: var(--burn-in-secondary-opacity);
+  mix-blend-mode: normal;
+  animation: ambient-float-b var(--burn-in-bg-secondary-duration) ease-in-out infinite alternate;
+}
+
+:root[data-panel-color-mode='high'] .app-ambient {
+  opacity: var(--burn-in-ambient-opacity);
+}
+
+:root[data-panel-color-mode='high'] .glass-surface {
+  backdrop-filter: none;
+}
+
+:root[data-panel-color-mode='high'] .app-content-layer {
+  animation: burn-in-drift var(--burn-in-content-duration) linear infinite alternate;
+  will-change: transform;
+}
+
+:root[data-panel-color-mode='high'] .tech-overlay,
+:root[data-panel-color-mode='high'] .admin-exit-trigger,
+:root[data-panel-color-mode='high'] .time-debug-panel {
+  animation: burn-in-overlay-drift var(--burn-in-overlay-duration) linear infinite alternate;
+}
+
+:root[data-burn-in-debug-mode='off'][data-panel-color-mode='high'] .app-shell::before,
+:root[data-burn-in-debug-mode='off'][data-panel-color-mode='high'] .app-shell::after,
+:root[data-burn-in-debug-mode='off'][data-panel-color-mode='high'] .app-ambient,
+:root[data-burn-in-debug-mode='off'][data-panel-color-mode='high'] .app-content-layer,
+:root[data-burn-in-debug-mode='off'][data-panel-color-mode='high'] .tech-overlay,
+:root[data-burn-in-debug-mode='off'][data-panel-color-mode='high'] .admin-exit-trigger,
+:root[data-burn-in-debug-mode='off'][data-panel-color-mode='high'] .time-debug-panel {
+  animation: none;
+}
+
+:root[data-panel-color-mode='high'] .glass-surface,
+:root[data-panel-color-mode='high'] .token-device-pill,
+:root[data-panel-color-mode='high'] .time-debug-panel,
+:root[data-panel-color-mode='high'] .admin-exit-trigger,
+:root[data-panel-color-mode='high'] .admin-exit-modal,
+:root[data-panel-color-mode='high'] .token-input,
+:root[data-panel-color-mode='high'] .glass-input {
+  border-color: color-mix(in srgb, var(--line) 88%, #ffffff 12%);
+}
+
+:root[data-panel-color-mode='high'] .layout-heading h1,
+:root[data-panel-color-mode='high'] .promo-title,
+:root[data-panel-color-mode='high'] .promo-category-inline,
+:root[data-panel-color-mode='high'] .card-name,
+:root[data-panel-color-mode='high'] .card-price,
+:root[data-panel-color-mode='high'] .promo-greeting,
+:root[data-panel-color-mode='high'] .token-title-block h1,
+:root[data-panel-color-mode='high'] .token-device-value,
+:root[data-panel-color-mode='high'] .admin-exit-title {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-panel-color-mode='high'] .eyebrow,
+:root[data-panel-color-mode='high'] .token-input-label,
+:root[data-panel-color-mode='high'] .promo-kicker,
+:root[data-panel-color-mode='high'] .promo-category-caption,
+:root[data-panel-color-mode='high'] .card-list-header,
+:root[data-panel-color-mode='high'] .promo-message,
+:root[data-panel-color-mode='high'] .promo-date,
+:root[data-panel-color-mode='high'] .lede,
+:root[data-panel-color-mode='high'] .promo-subtitle,
+:root[data-panel-color-mode='high'] .token-device-label,
+:root[data-panel-color-mode='high'] .tech-overlay {
+  color: var(--text-soft);
+}
+
 .layout,
 .screen-grid,
 .screen-main {
   position: relative;
   z-index: 1;
+}
+
+.app-content-layer {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
 }
 
 .layout {
@@ -879,7 +980,7 @@
 
 .token-config-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: calc(var(--space-2) * 0.8);
 }
 
@@ -914,6 +1015,23 @@
 .token-input::placeholder,
 .glass-input::placeholder {
   color: var(--input-placeholder);
+}
+
+.token-select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-soft) 50%),
+    linear-gradient(135deg, var(--text-soft) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: calc(34px * var(--ui-scale-factor));
+}
+
+.token-select option {
+  color: #111111;
 }
 
 .token-input:focus,
@@ -1050,6 +1168,15 @@
 :root[data-viewport-density='medium'] .token-device-meta,
 :root[data-viewport-density='compact'] .token-device-meta {
   grid-template-columns: 1fr;
+}
+
+:root[data-viewport-density='medium'] .token-config-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+:root[data-viewport-density='compact'] .token-config-grid,
+:root[data-viewport-density='low-res-tv'] .token-config-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 :root[data-viewport-density='low-res-tv'] .token-device-meta {
@@ -1472,9 +1599,33 @@
   100% { transform: translate3d(-0.4%, -1%, 0) scale(1.05); }
 }
 
+@keyframes burn-in-drift {
+  0% { transform: translate3d(0, 0, 0); }
+  18% { transform: translate3d(calc(2px * var(--burn-in-content-drift-scale)), calc(-1px * var(--burn-in-content-drift-scale)), 0); }
+  37% { transform: translate3d(calc(-2px * var(--burn-in-content-drift-scale)), calc(1px * var(--burn-in-content-drift-scale)), 0); }
+  58% { transform: translate3d(calc(3px * var(--burn-in-content-drift-scale)), calc(2px * var(--burn-in-content-drift-scale)), 0); }
+  79% { transform: translate3d(calc(-1px * var(--burn-in-content-drift-scale)), calc(-2px * var(--burn-in-content-drift-scale)), 0); }
+  100% { transform: translate3d(calc(1px * var(--burn-in-content-drift-scale)), calc(1px * var(--burn-in-content-drift-scale)), 0); }
+}
+
+@keyframes burn-in-overlay-drift {
+  0% { transform: translate3d(0, 0, 0); }
+  22% { transform: translate3d(calc(-1px * var(--burn-in-overlay-drift-scale)), calc(1px * var(--burn-in-overlay-drift-scale)), 0); }
+  49% { transform: translate3d(calc(1px * var(--burn-in-overlay-drift-scale)), calc(-1px * var(--burn-in-overlay-drift-scale)), 0); }
+  76% { transform: translate3d(0, calc(2px * var(--burn-in-overlay-drift-scale)), 0); }
+  100% { transform: translate3d(calc(-1px * var(--burn-in-overlay-drift-scale)), 0, 0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .screen-main {
     transform: none;
+  }
+
+  .app-content-layer,
+  .tech-overlay,
+  .admin-exit-trigger,
+  .time-debug-panel {
+    animation: none !important;
   }
 
   .app-shell::before,

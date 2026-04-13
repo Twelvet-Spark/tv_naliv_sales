@@ -129,6 +129,60 @@ function parsePromotion(raw: unknown, index: number): Promotion | null {
   }
 }
 
+function buildFallbackDetailFromItem(raw: Record<string, unknown>): PromotionDetail | null {
+  const detailId = asNumber(raw.detail_id) ?? asNumber(raw.item_id)
+  if (detailId === null) return null
+
+  return {
+    detail_id: detailId,
+    item_id: asNumber(raw.item_id),
+    item_name: asNullableString(raw.item_name),
+    item_img: asNullableString(raw.item_img),
+    item_code: asNullableString(raw.item_code),
+    price: asNumber(raw.price),
+    type: 'UNKNOWN',
+    name: 'Спецусловие',
+    discount: asNumber(raw.discount),
+    base_amount: asNumber(raw.base_amount),
+    add_amount: asNumber(raw.add_amount),
+  }
+}
+
+function parseFallbackPromotionList(rawItems: unknown[], businessId: number | null, businessName: string | null): Promotion[] {
+  const details = rawItems.flatMap((item) => {
+    if (!isRecord(item)) return []
+
+    const rawDetails = Array.isArray(item.details) ? item.details : []
+    const parsedDetails = rawDetails
+      .map((detail, detailIndex) => parsePromotionDetail(detail, detailIndex))
+      .filter((detail): detail is PromotionDetail => detail !== null)
+
+    if (parsedDetails.length > 0) {
+      return parsedDetails
+    }
+
+    const fallbackDetail = buildFallbackDetailFromItem(item)
+    return fallbackDetail ? [fallbackDetail] : []
+  })
+
+  if (details.length === 0) return []
+
+  const firstItem = rawItems.find(isRecord) ?? null
+  const fallbackName = businessName ? `Акции ${businessName}` : 'Акционные позиции'
+
+  return [
+    {
+      marketing_promotion_id: businessId ?? (firstItem ? asNumber(firstItem.item_id) ?? asNumber(firstItem.detail_id) ?? 1 : 1),
+      name: fallbackName,
+      internal_name: fallbackName,
+      cover: firstItem ? compactString(firstItem.item_img) : null,
+      start_promotion_date: '',
+      end_promotion_date: '',
+      details,
+    },
+  ]
+}
+
 function parsePayload(raw: unknown): PromotionsPayload {
   if (!isRecord(raw)) {
     throw new Error('Некорректный ответ сервера акций')
@@ -140,16 +194,21 @@ function parsePayload(raw: unknown): PromotionsPayload {
   }
 
   const data = isRecord(raw.data) ? raw.data : {}
-  const rawPromotions = Array.isArray(data.promotions) ? data.promotions : []
-  const promotions = rawPromotions
-    .map((promotion, index) => parsePromotion(promotion, index))
-    .filter((promotion): promotion is Promotion => promotion !== null)
-
   const business = isRecord(data.business) ? data.business : null
   const businessId = business ? asNumber(business.business_id) : null
   const businessName = business && typeof business.name === 'string' ? business.name : null
   const businessAddress = parseBusinessAddress(business)
-  const count = asNumber(data.promotions_count, promotions.length) ?? promotions.length
+
+  const rawPromotions = Array.isArray(data.promotions) ? data.promotions : []
+  const parsedPromotions = rawPromotions
+    .map((promotion, index) => parsePromotion(promotion, index))
+    .filter((promotion): promotion is Promotion => promotion !== null)
+
+  const rawItems = Array.isArray(data.items) ? data.items : []
+  const fallbackPromotions = parseFallbackPromotionList(rawItems, businessId, businessName)
+
+  const promotions = parsedPromotions.length > 0 ? parsedPromotions : fallbackPromotions
+  const count = asNumber(data.promotions_count, asNumber(data.items_count, promotions.length)) ?? promotions.length
 
   return {
     businessId,

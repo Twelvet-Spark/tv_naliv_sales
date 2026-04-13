@@ -1,5 +1,7 @@
 import { DEBUG_TIME_PRESETS, type DebugMessageMode } from '../features/theme/kzTime'
 
+export type BurnInDebugMode = 'off' | 'slow' | 'normal' | 'fast' | 'test'
+
 const MESSAGE_MODE_OPTIONS: Array<{ label: string; value: DebugMessageMode }> = [
   { label: 'Авто', value: 'auto' },
   { label: 'Общие', value: 'general' },
@@ -11,6 +13,13 @@ const MESSAGE_MODE_OPTIONS: Array<{ label: string; value: DebugMessageMode }> = 
 ]
 
 const ANIMATION_OPTIONS = ['Авто', '1', '2', '3', '4', '5', '6'] as const
+const BURN_IN_OPTIONS: Array<{ label: string; value: BurnInDebugMode }> = [
+  { label: 'Выкл', value: 'off' },
+  { label: 'Медленно', value: 'slow' },
+  { label: 'Норма', value: 'normal' },
+  { label: 'Быстро', value: 'fast' },
+  { label: 'Тест', value: 'test' },
+]
 
 type Props = {
   value: number | null
@@ -21,6 +30,8 @@ type Props = {
   onRotationPausedChange: (value: boolean) => void
   textAnimationMode: number | null
   onTextAnimationModeChange: (value: number | null) => void
+  burnInMode: BurnInDebugMode
+  onBurnInModeChange: (value: BurnInDebugMode) => void
   onPrevPage: () => void
   onNextPage: () => void
   onNextMessage: () => void
@@ -35,6 +46,8 @@ export default function TimeDebugPanel({
   onRotationPausedChange,
   textAnimationMode,
   onTextAnimationModeChange,
+  burnInMode,
+  onBurnInModeChange,
   onPrevPage,
   onNextPage,
   onNextMessage,
@@ -96,6 +109,23 @@ export default function TimeDebugPanel({
               </button>
             )
           })}
+        </div>
+      </div>
+
+      <div className="time-debug-group">
+        <span className="time-debug-label">Защита от прожига</span>
+        <div className="time-debug-buttons">
+          {BURN_IN_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`time-debug-button ${burnInMode === option.value ? 'is-active' : ''}`}
+              aria-pressed={burnInMode === option.value}
+              onClick={() => onBurnInModeChange(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
 
