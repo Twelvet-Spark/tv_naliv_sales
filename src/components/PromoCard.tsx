@@ -1,39 +1,23 @@
-import PromoDetailsSurface from './PromoDetailsSurface'
+import { useMemo } from 'react'
 import PromoTable from './PromoTable'
+import { getPromotionPresentation } from '../features/promotions/format'
+import type { Promotion, PromotionDetail } from '../features/promotions/types'
 
-type PromotionDetail = {
-  detail_id: number
-  item_id: number | null
-  item_name: string | null
-  item_img: string | null
-  item_code: string | null
-  price: number | null
-  type: string
-  name: string
-  discount: number | null
-  base_amount: number | null
-  add_amount: number | null
-}
-
-type Promotion = {
-  marketing_promotion_id: number
-  name: string
-  internal_name: string
-  start_promotion_date: string
-  end_promotion_date: string
-}
+const PROGRESS_CIRCUMFERENCE = 2 * Math.PI * 19
+const DETAIL_EXIT_WINDOW_MS = 1300
 
 type Props = {
   promotion: Promotion
-  details: PromotionDetail[]
-  hasDiscountType: boolean
-  pageProgressKey: string
-  pageDurationMs: number
-  detailProgressKey: string
+  rowsPerPage: number
   detailDurationMs: number
   detailPageCount: number
-  detailPageIndex: number
-  onDetailPageChange: (next: number) => void
+  promoIndex: number
+  promoCount: number
+  ringDurationMs: number
+  ringElapsedMs: number
+  isRotationPaused: boolean
+  pageStartedAtMs: number
+  nowMs: number
   describeDetail: (detail: PromotionDetail) => string
   formatPrice: (value: number | null) => string
   computeNewPrice: (detail: PromotionDetail) => number | null
@@ -42,72 +26,107 @@ type Props = {
 
 export default function PromoCard({
   promotion,
-  details,
-  hasDiscountType,
-  pageProgressKey,
-  pageDurationMs,
-  detailProgressKey,
+  rowsPerPage,
   detailDurationMs,
   detailPageCount,
-  detailPageIndex,
-  onDetailPageChange,
+  promoIndex,
+  promoCount,
+  ringDurationMs,
+  ringElapsedMs,
+  isRotationPaused,
+  pageStartedAtMs,
+  nowMs,
   describeDetail,
   formatPrice,
   computeNewPrice,
   formatDate,
 }: Props) {
-  return (
-    <PromoDetailsSurface className="promo-card" key={promotion.marketing_promotion_id}>
-      <div className="promo-head">
-        <div>
-          <p className="promo-sub">{promotion.internal_name}</p>
-          <h2 className="promo-title">{promotion.name}</h2>
-        </div>
-        <span className="promo-date">
-          {formatDate(promotion.start_promotion_date)} — {formatDate(promotion.end_promotion_date)}
-        </span>
-      </div>
+  const detailPageIndex = useMemo(() => {
+    if (detailPageCount <= 1) return 0
+    return Math.floor(Math.max(0, nowMs - pageStartedAtMs) / detailDurationMs) % detailPageCount
+  }, [detailDurationMs, detailPageCount, nowMs, pageStartedAtMs])
 
-      <div className="progress-track">
-        <div
-          className="progress-fill"
-          key={pageProgressKey}
-          style={{ animationDuration: `${pageDurationMs}ms` }}
-          aria-hidden
-        />
+  const detailPageElapsedMs = useMemo(() => {
+    if (detailPageCount <= 1) return 0
+    return Math.max(0, nowMs - pageStartedAtMs) % detailDurationMs
+  }, [detailDurationMs, detailPageCount, nowMs, pageStartedAtMs])
+
+  const animationPhase = detailPageCount > 1 && detailPageElapsedMs >= detailDurationMs - DETAIL_EXIT_WINDOW_MS ? 'exit' : 'enter'
+
+  const visibleDetails = useMemo(() => {
+    if (detailPageCount <= 1) return promotion.details.slice(0, rowsPerPage)
+
+    const total = promotion.details.length
+    const basePerPage = Math.floor(total / detailPageCount)
+    const extra = total % detailPageCount
+
+    let start = 0
+    for (let i = 0; i < detailPageIndex; i++) {
+      start += basePerPage + (i < extra ? 1 : 0)
+    }
+    const count = basePerPage + (detailPageIndex < extra ? 1 : 0)
+    return promotion.details.slice(start, start + count)
+  }, [detailPageIndex, detailPageCount, promotion.details, rowsPerPage])
+
+  const presentation = useMemo(() => getPromotionPresentation(promotion), [promotion])
+
+  const detailTableKey = `${promotion.marketing_promotion_id}-${detailPageIndex}`
+  const progressLabel = detailPageCount > 1 ? `${detailPageIndex + 1}` : `${promoIndex + 1}`
+  const progressTotal = detailPageCount > 1 ? detailPageCount : Math.max(1, promoCount)
+  const normalizedRingElapsedMs = ringDurationMs > 0 ? ringElapsedMs % ringDurationMs : 0
+
+  return (
+    <div className="promo-card">
+      <div className="promo-head">
+        <div className="promo-head-copy">
+          <div className="promo-topline">
+            <span className="promo-category-inline">{presentation.categoryLabel}</span>
+            <span className="promo-date">
+              {formatDate(promotion.start_promotion_date)} — {formatDate(promotion.end_promotion_date)}
+            </span>
+          </div>
+          <span className="promo-kicker">{presentation.kicker}</span>
+          <h2 className="promo-title">{presentation.title}</h2>
+          <p className="promo-subtitle">{presentation.subtitle}</p>
+        </div>
+        <div className="promo-head-meta">
+          <div className="promo-progress" aria-label="Индикатор времени показа">
+            <svg className="promo-progress-ring" viewBox="0 0 48 48" aria-hidden>
+              <circle className="promo-progress-track" cx="24" cy="24" r="19" />
+              <circle
+                className="promo-progress-value"
+                cx="24"
+                cy="24"
+                r="19"
+                style={{
+                  strokeDasharray: PROGRESS_CIRCUMFERENCE,
+                  strokeDashoffset: PROGRESS_CIRCUMFERENCE,
+                  animationDuration: `${Math.max(1, ringDurationMs)}ms`,
+                  animationDelay: `-${Math.max(0, normalizedRingElapsedMs)}ms`,
+                  animationPlayState: isRotationPaused ? 'paused' : 'running',
+                }}
+              />
+            </svg>
+            <span className="promo-progress-number">{progressLabel}/{progressTotal}</span>
+          </div>
+          {promoCount > 1 && (
+            <span className="promo-page-dots">
+              {Array.from({ length: promoCount }, (_, i) => (
+                <span key={i} className={`promo-dot ${i === promoIndex ? 'promo-dot-active' : ''}`} />
+              ))}
+            </span>
+          )}
+        </div>
       </div>
 
       <PromoTable
-        details={details}
-        hasDiscountType={hasDiscountType}
+        key={detailTableKey}
+        details={visibleDetails}
+        animationPhase={animationPhase}
         describeDetail={describeDetail}
         formatPrice={formatPrice}
         computeNewPrice={computeNewPrice}
       />
-
-      {detailPageCount > 1 && (
-        <div className="progress-track progress-track-subtle">
-          <div
-            className="progress-fill"
-            key={detailProgressKey}
-            style={{ animationDuration: `${detailDurationMs}ms` }}
-            aria-hidden
-          />
-        </div>
-      )}
-
-      {detailPageCount > 1 && (
-        <div className="carousel-dots" aria-label="Навигация по строкам акции">
-          {Array.from({ length: detailPageCount }).map((_, idx) => (
-            <button
-              key={idx}
-              className={idx === detailPageIndex ? 'dot active' : 'dot'}
-              onClick={() => onDetailPageChange(idx)}
-              aria-label={`Страница деталей ${idx + 1}`}
-            />
-          ))}
-        </div>
-      )}
-    </PromoDetailsSurface>
+    </div>
   )
 }

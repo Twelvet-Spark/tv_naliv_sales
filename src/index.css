@@ -1,15 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-
 :root {
-  font-family: 'Manrope', 'Segoe UI', 'Helvetica Neue', sans-serif;
-  font-size: 19px;
-  line-height: 1.6;
+  font-family: 'Bahnschrift', 'Trebuchet MS', 'Segoe UI Variable Display', sans-serif;
+  font-size: 18px;
+  line-height: 1.45;
   font-weight: 400;
-  background: #ffffff;
-  color: #0e0e0e;
+  background: var(--bg-base, #111111);
+  color: var(--text-strong, #ffffff);
   min-height: 100vh;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
+}
+
+:root[data-theme='day'] {
+  background: var(--bg-base, #f4f4f7);
+  color: var(--text-strong, #1a1a1a);
+  color-scheme: light;
+}
+
+:root[data-theme='night'] {
+  background: var(--bg-base, #111111);
+  color: var(--text-strong, #ffffff);
+  color-scheme: dark;
 }
 
 * {
@@ -25,6 +36,15 @@ body,
 body {
   margin: 0;
   overflow: hidden;
+  background: var(--bg-base, #111111);
+}
+
+body[data-theme='day'] {
+  background: var(--bg-base, #f4f4f7);
+}
+
+body[data-theme='night'] {
+  background: var(--bg-base, #111111);
 }
 
 a {

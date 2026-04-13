@@ -12,7 +12,7 @@
 
 - [x] Create and Run Task (npm scripts cover workflows)
 
-- [ ] Launch the Project (run npm run dev when ready)
+- [x] Launch the Project (run npm run dev when ready)
 
 - [x] Ensure Documentation is Complete
 

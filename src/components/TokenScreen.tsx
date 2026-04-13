@@ -8,16 +8,17 @@ type Props = {
   value: string
   onChange: (value: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  validationMessage?: string | null
 }
 
-export default function TokenScreen({ value, onChange, onSubmit }: Props) {
+export default function TokenScreen({ value, onChange, onSubmit, validationMessage }: Props) {
   return (
     <div className="token-screen">
       <GlassHeader>
         <div className="layout-heading">
-          <p className="eyebrow">TV API · NALIV</p>
-          <h1>Токен доступа</h1>
-          <p className="lede">Введите бизнес-токен для загрузки акций на экран.</p>
+          <p className="eyebrow">НАЛИВ ТВ</p>
+          <h1>Подключение экрана</h1>
+          <p className="lede">Введите бизнес-токен. После сохранения экран начнет автоматически обновлять акции магазина.</p>
         </div>
       </GlassHeader>
 
@@ -30,8 +31,9 @@ export default function TokenScreen({ value, onChange, onSubmit }: Props) {
             value={value}
             onChange={(event) => onChange(event.target.value)}
             autoComplete="off"
-            hint="Токен сохраняется в localStorage и не отправляется наружу."
+            hint="Токен сохраняется только на устройстве. При кратком сбое сети экран продолжит показывать последние загруженные акции."
           />
+          {validationMessage ? <p className="token-error" role="alert">{validationMessage}</p> : null}
           <div className="token-actions">
             <PrimaryButton type="submit">Сохранить и перейти к акциям</PrimaryButton>
           </div>
