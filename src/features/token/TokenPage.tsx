@@ -17,6 +17,7 @@ export default function TokenPage({ token, wallConfig, onSave }: Props) {
   const [screenNumberValue, setScreenNumberValue] = useState(String(wallConfig.screenIndex + 1))
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+  const isInitialSetup = token.trim().length === 0
 
   useEffect(() => {
     setValue(token)
@@ -61,6 +62,7 @@ export default function TokenPage({ token, wallConfig, onSave }: Props) {
   return (
     <Layout hideHeader>
       <TokenScreen
+        isInitialSetup={isInitialSetup}
         value={value}
         onChange={setValue}
         screenCountValue={screenCountValue}
